@@ -23,9 +23,8 @@ def rl_training_loop(train_env, agent, file_writer, max_train_steps=1000, eval_i
         experience = replay_buffer.gather_all()
         train_loss = agent.train(experience)
         # keep track of actor and critic loss
-        actor_loss = train_loss.loss
         with file_writer.as_default():
-            tf.summary.scalar("Actor Loss", actor_loss, i)
+            tf.summary.scalar("Actor Loss", train_loss.loss, i)
         replay_buffer.clear()
 
 
