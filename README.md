@@ -2,4 +2,4 @@
 
 This project is about developing an RL-based framework for single or multi step ahead prediciton of time series data
 Here is an overview of the proposed methodology
-![Alt text](overview.jpg?raw=true "Methodology")
+![Alt text](./overview.png?raw=true "Methodology")
