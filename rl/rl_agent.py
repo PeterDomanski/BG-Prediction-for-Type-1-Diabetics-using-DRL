@@ -17,7 +17,8 @@ def get_rl_agent(train_env):
         actor_net,
         critic_net,
         actor_optimizer=tf.keras.optimizers.Adam(),
-        critic_optimizer=tf.keras.optimizers.Adam()
+        critic_optimizer=tf.keras.optimizers.Adam(),
+        target_update_period=100
     )
 
     agent.initialize()
