@@ -88,3 +88,18 @@ def compute_rmse_single_step(env, policy, num_iter=16):
 
     avg_rmse = total_rmse / num_iter
     return tf.squeeze(avg_rmse)
+
+
+def compute_mae_multi_step(env, policy, num_iter=16):
+    print("Not implemented yet")
+    return 0.0
+
+
+def compute_mse_multi_step(env, policy, num_iter=16):
+    print("Not implemented yet")
+    return 0.0
+
+
+def compute_rmse_multi_step(env, policy, num_iter=16):
+    print("Not implemented yet")
+    return 0.0
