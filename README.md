@@ -14,6 +14,7 @@ Here is an overview of the proposed methodology:
     - window_size [int]: specify length of window (single or multi step)
     - min_attribute_val [float]: specify minimum value of attribute, e.g., CGM
     - max_attribute_val [float]: specify maximum value of attribute, e.g., CGM
+    - forecasting_steps [int]: specify number of steps to forecast in multi step scenario
 
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)

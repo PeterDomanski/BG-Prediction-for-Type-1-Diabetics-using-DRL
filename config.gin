@@ -13,3 +13,9 @@ rl_training_loop.eval_interval = 10
 TsForecastingSingleStepEnv.window_size = 5
 TsForecastingSingleStepEnv.min_attribute_val = 35.0
 TsForecastingSingleStepEnv.max_attribute_val = 500.0
+
+# multi step forecasting
+TsForecastingMultiStepEnv.window_size = 12
+TsForecastingMultiStepEnv.forecasting_steps = 5
+TsForecastingSingleStepEnv.min_attribute_val = 35.0
+TsForecastingSingleStepEnv.max_attribute_val = 500.0
