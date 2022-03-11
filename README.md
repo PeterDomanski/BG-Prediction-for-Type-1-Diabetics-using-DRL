@@ -5,11 +5,15 @@ Here is an overview of the proposed methodology:
 ![Alt text](./images/overview.png?raw=true "Methodology")
 
 ### Configuration options of the framework (conig.gin) <br/>
-    - path_to_data [str]: specifiy path to csv data set
+    - path_to_train_data [str]: specifiy path to csv training data set
+    - path_to_eval_data [str]: specify path to csv testing data set <br/>
+        Note: if path is empty, training data is used for evaluation
     - setup [str]: specify setup (currently single_step and multi_step)
     - max_train_steps [int]: specify max number of training steps
     - eval_interval [int]: specify how often to evaluate
     - window_size [int]: specify length of window (single or multi step)
+    - min_attribute_val [float]: specify minimum value of attribute, e.g., CGM
+    - max_attribute_val [float]: specify maximum value of attribute, e.g., CGM
 
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)

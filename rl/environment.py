@@ -8,7 +8,7 @@ import gin
 
 @gin.configurable
 class TsForecastingSingleStepEnv(gym.Env):
-    def __init__(self, ts_data, window_size=5, evaluation=False):
+    def __init__(self, ts_data, window_size=5, min_attribute_val=35.0, max_attribute_val=500.0, evaluation=False):
         self.evaluation = evaluation
         self.ts_data = ts_data
         self.num_data_points = len(ts_data)
@@ -17,11 +17,10 @@ class TsForecastingSingleStepEnv(gym.Env):
         self.current_ground_truth = None
         self.state = None
         # define observation space
-        self.observation_space = Box(np.array([0.0 for _ in range(self.window_length)]),
-                                     np.array([2.0 for _ in range(self.window_length)]))
+        self.observation_space = Box(np.array([min_attribute_val for _ in range(self.window_length)]),
+                                     np.array([max_attribute_val for _ in range(self.window_length)]))
         # define action space
-        # self.action_space = Tuple([Box(np.array([0.0]), np.array([2.0]))])
-        self.action_space = Box(np.array([0.0]), np.array([2.0]))
+        self.action_space = Box(np.array([min_attribute_val]), np.array([max_attribute_val]))
 
     def step(self, action):
         if self.evaluation:

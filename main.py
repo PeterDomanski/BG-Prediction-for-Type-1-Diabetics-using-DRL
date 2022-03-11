@@ -14,19 +14,24 @@ def main(args):
 
 
 @gin.configurable
-def run(path_to_data="", setup="single_step"):
+def run(path_to_train_data="", path_to_eval_data="", setup="single_step"):
     # logging
     log_dir = "./logs/" + "log" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     file_writer = tf.summary.create_file_writer(log_dir)
     logging.get_absl_handler().use_absl_log_file(program_name="log", log_dir=log_dir)
     # load data set
-    ts_data = dataset.load_csv_dataset(path_to_data)
+    ts_train_data = dataset.load_csv_dataset(path_to_train_data)
+    if path_to_eval_data != "":
+        ts_eval_data = dataset.load_csv_dataset(path_to_eval_data)
     # create environment
     if setup == "single_step":
-        train_env = environment.TsForecastingSingleStepEnv(ts_data)
-        eval_env = environment.TsForecastingSingleStepEnv(ts_data, evaluation=True)
+        train_env = environment.TsForecastingSingleStepEnv(ts_train_data)
+        if path_to_eval_data != "":
+            eval_env = environment.TsForecastingSingleStepEnv(ts_eval_data, evaluation=True)
+        else:
+            eval_env = environment.TsForecastingSingleStepEnv(ts_train_data, evaluation=True)
     elif setup == "multi_step":
-        train_env = environment.TsForecastingMultiStepEnv(ts_data)
+        train_env = environment.TsForecastingMultiStepEnv(ts_train_data)
     # get TF environment
     tf_train_env = environment.get_tf_environment(train_env)
     tf_eval_env = environment.get_tf_environment(eval_env)
