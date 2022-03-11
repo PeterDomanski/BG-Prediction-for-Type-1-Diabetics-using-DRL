@@ -59,12 +59,7 @@ class TsForecastingSingleStepEnv(gym.Env):
 
 class TsForecastingMultiStepEnv(gym.Env):
     def __init__(self, ts_data):
-        self.ts_data = ts_data
-        self.num_data_points = len(ts_data)
-        self.window_length = 25
-        self.current_data_pos = 0
-        self.forecasting_steps = 5
-        self.current_ground_truth = [None for _ in range(self.forecasting_steps)]
+        pass
 
     def step(self, action):
         pass

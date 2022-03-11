@@ -20,7 +20,7 @@ Navigate to logging directory of interest and type  (in the terminal)
 ```
 tensorboard --logdir .
 ```
-Or specify the total path to the directory, e.g., 
+Or specify the absolute path to the directory, e.g., 
 ```
 tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
 ```
@@ -47,4 +47,10 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
 - evaluation.py
   - evaluation of forecasts
   - metrics: MAE, MSE, RMSE
+
+### TODO's
+- Continuous or discrete action space -> should prediction, here CGM, be continuous or discrete?
+- Reward function design
+- Hyperparameter tuning
+- More configuration options
 
