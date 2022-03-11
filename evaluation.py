@@ -30,7 +30,7 @@ def compute_mae_single_step(env, policy, num_iter=16):
         step_counter = 0
 
         while not time_step.is_last():
-            step_counter =+ 1
+            step_counter += 1
             action_step, rnn_state, _ = policy.action(time_step, rnn_state)
             time_step = env.step(action_step)
             # agent forecast
@@ -53,7 +53,7 @@ def compute_mse_single_step(env, policy, num_iter=16):
         step_counter = 0
 
         while not time_step.is_last():
-            step_counter = + 1
+            step_counter += 1
             action_step, rnn_state, _ = policy.action(time_step, rnn_state)
             time_step = env.step(action_step)
             # agent forecast
@@ -76,7 +76,7 @@ def compute_rmse_single_step(env, policy, num_iter=16):
         step_counter = 0
 
         while not time_step.is_last():
-            step_counter = + 1
+            step_counter += 1
             action_step, rnn_state, _ = policy.action(time_step, rnn_state)
             time_step = env.step(action_step)
             # agent forecast
@@ -90,16 +90,73 @@ def compute_rmse_single_step(env, policy, num_iter=16):
     return tf.squeeze(avg_rmse)
 
 
-def compute_mae_multi_step(env, policy, num_iter=16):
-    print("Not implemented yet")
-    return 0.0
+def compute_mae_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=16):
+    total_mae = 0.0
+    for _ in range(num_iter):
+        time_step = env.reset()
+        rnn_state = policy.get_initial_state(batch_size=1)
+        episode_mae = 0.0
+        step_counter = 0
+
+        while not time_step.is_last():
+            step_counter += 1
+            action_step, rnn_state, _ = policy.action(time_step, rnn_state)
+            time_step = env.step(action_step)
+            # agent forecast
+            agent_pred = tf.squeeze(action_step)
+            ground_truth_pos = int(tf.squeeze(time_step.reward))
+            ground_truth = ts_eval_data[ground_truth_pos - forecasting_steps:ground_truth_pos]
+            episode_mae += tf.math.reduce_mean(tf.math.abs(agent_pred - ground_truth))
+
+        total_mae += episode_mae / step_counter
+
+    avg_mae = total_mae / num_iter
+    return tf.squeeze(avg_mae)
 
 
-def compute_mse_multi_step(env, policy, num_iter=16):
-    print("Not implemented yet")
-    return 0.0
+def compute_mse_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=16):
+    total_mse = 0.0
+    for _ in range(num_iter):
+        time_step = env.reset()
+        rnn_state = policy.get_initial_state(batch_size=1)
+        episode_mse = 0.0
+        step_counter = 0
+
+        while not time_step.is_last():
+            step_counter += 1
+            action_step, rnn_state, _ = policy.action(time_step, rnn_state)
+            time_step = env.step(action_step)
+            # agent forecast
+            agent_pred = tf.squeeze(action_step)
+            ground_truth_pos = int(tf.squeeze(time_step.reward))
+            ground_truth = ts_eval_data[ground_truth_pos - forecasting_steps:ground_truth_pos]
+            episode_mse += tf.math.reduce_mean((agent_pred - ground_truth) ** 2)
+
+        total_mse += episode_mse / step_counter
+
+    avg_mse = total_mse / num_iter
+    return tf.squeeze(avg_mse)
 
 
-def compute_rmse_multi_step(env, policy, num_iter=16):
-    print("Not implemented yet")
-    return 0.0
+def compute_rmse_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=16):
+    total_rmse = 0.0
+    for _ in range(num_iter):
+        time_step = env.reset()
+        rnn_state = policy.get_initial_state(batch_size=1)
+        episode_rmse = 0.0
+        step_counter = 0
+
+        while not time_step.is_last():
+            step_counter += 1
+            action_step, rnn_state, _ = policy.action(time_step, rnn_state)
+            time_step = env.step(action_step)
+            # agent forecast
+            agent_pred = tf.squeeze(action_step)
+            ground_truth_pos = ground_truth_pos = int(tf.squeeze(time_step.reward))
+            ground_truth = ts_eval_data[ground_truth_pos - forecasting_steps:ground_truth_pos]
+            episode_rmse += tf.math.reduce_mean((agent_pred - ground_truth) ** 2)
+
+        total_rmse += tf.math.sqrt(episode_rmse / step_counter)
+
+    avg_rmse = total_rmse / num_iter
+    return tf.squeeze(avg_rmse)

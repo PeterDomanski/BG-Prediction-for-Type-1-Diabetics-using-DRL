@@ -6,8 +6,8 @@ import evaluation
 
 
 @gin.configurable
-def rl_training_loop(train_env, eval_env, agent, file_writer, setup, max_train_steps=1000,
-                     eval_interval=100):
+def rl_training_loop(train_env, eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps,
+                     max_train_steps=1000, eval_interval=100):
     # replay buffer for data collection
     replay_buffer = get_replay_buffer(agent, batch_size=1)
     # create driver for data collection
@@ -24,9 +24,9 @@ def rl_training_loop(train_env, eval_env, agent, file_writer, setup, max_train_s
                 avg_mse = evaluation.compute_mse_single_step(eval_env, agent.policy)
                 avg_rmse = evaluation.compute_rmse_single_step(eval_env, agent.policy)
             else:
-                avg_mae = evaluation.compute_mae_multi_step(eval_env, agent.policy)
-                avg_mse = evaluation.compute_mse_multi_step(eval_env, agent.policy)
-                avg_rmse = evaluation.compute_rmse_multi_step(eval_env, agent.policy)
+                avg_mae = evaluation.compute_mae_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
+                avg_mse = evaluation.compute_mse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
+                avg_rmse = evaluation.compute_rmse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
             with file_writer.as_default():
                 tf.summary.scalar("Average Return", avg_return, i)
                 tf.summary.scalar("Average MAE", avg_mae, i)
