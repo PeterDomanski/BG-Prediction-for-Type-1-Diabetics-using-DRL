@@ -39,4 +39,5 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
   - Reinforcement Learning loop
 - evaluation.py
   - evaluation of forecasts
+  - metrics: MAE, MSE, RMSE
 
