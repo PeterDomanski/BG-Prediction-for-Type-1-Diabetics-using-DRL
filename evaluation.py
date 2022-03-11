@@ -84,7 +84,7 @@ def compute_rmse_single_step(env, policy, num_iter=16):
             ground_truth = time_step.reward
             episode_rmse += (agent_pred - ground_truth) ** 2
 
-        total_rmse += tf.math.square(episode_rmse / step_counter)
+        total_rmse += tf.math.sqrt(episode_rmse / step_counter)
 
     avg_rmse = total_rmse / num_iter
     return tf.squeeze(avg_rmse)
