@@ -7,6 +7,9 @@ Here is an overview of the proposed methodology:
 ### Configuration options of the framework (conig.gin) <br/>
     - path_to_data [str]: specifiy path to csv data set
     - setup [str]: specify setup (currently single_step and multi_step)
+    - max_train_steps [int]: specify max number of training steps
+    - eval_interval [int]: specify how often to evaluate
+    - window_size [int]: specify length of window (single or multi step)
 
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)

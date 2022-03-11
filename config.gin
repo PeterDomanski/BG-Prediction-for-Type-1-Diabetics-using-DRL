@@ -1,2 +1,8 @@
 run.path_to_data = "./data/RasberryPi.csv"
 run.setup = "single_step"
+
+rl_training_loop.max_train_steps = 1000
+rl_training_loop.eval_interval = 10
+
+# single step forecasting
+TsForecastingSingleStepEnv.window_size = 5

@@ -24,14 +24,16 @@ def run(path_to_data="", setup="single_step"):
     # create environment
     if setup == "single_step":
         train_env = environment.TsForecastingSingleStepEnv(ts_data)
+        eval_env = environment.TsForecastingSingleStepEnv(ts_data, evaluation=True)
     elif setup == "multi_step":
         train_env = environment.TsForecastingMultiStepEnv(ts_data)
     # get TF environment
     tf_train_env = environment.get_tf_environment(train_env)
+    tf_eval_env = environment.get_tf_environment(eval_env)
     # set up RL agent
     agent = rl_agent.get_rl_agent(tf_train_env)
     # train agent on environment
-    training.rl_training_loop(tf_train_env, agent, file_writer)
+    training.rl_training_loop(tf_train_env, tf_eval_env, agent, file_writer, setup)
     # evaluate the agent's performance
     print("Evaluation not implemented yet")
 

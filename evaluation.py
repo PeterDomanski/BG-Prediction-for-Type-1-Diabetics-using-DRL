@@ -19,3 +19,72 @@ def compute_avg_return(env, policy, num_iter=16):
 
     avg_return = total_return / num_iter
     return tf.squeeze(avg_return)
+
+
+def compute_mae_single_step(env, policy, num_iter=16):
+    total_mae = 0.0
+    for _ in range(num_iter):
+        time_step = env.reset()
+        rnn_state = policy.get_initial_state(batch_size=1)
+        episode_mae = 0.0
+        step_counter = 0
+
+        while not time_step.is_last():
+            step_counter =+ 1
+            action_step, rnn_state, _ = policy.action(time_step, rnn_state)
+            time_step = env.step(action_step)
+            # agent forecast
+            agent_pred = tf.squeeze(action_step)
+            ground_truth = time_step.reward
+            episode_mae += tf.math.abs(agent_pred - ground_truth)
+
+        total_mae += episode_mae / step_counter
+
+    avg_mae = total_mae / num_iter
+    return tf.squeeze(avg_mae)
+
+
+def compute_mse_single_step(env, policy, num_iter=16):
+    total_mse = 0.0
+    for _ in range(num_iter):
+        time_step = env.reset()
+        rnn_state = policy.get_initial_state(batch_size=1)
+        episode_mse = 0.0
+        step_counter = 0
+
+        while not time_step.is_last():
+            step_counter = + 1
+            action_step, rnn_state, _ = policy.action(time_step, rnn_state)
+            time_step = env.step(action_step)
+            # agent forecast
+            agent_pred = tf.squeeze(action_step)
+            ground_truth = time_step.reward
+            episode_mse += (agent_pred - ground_truth) ** 2
+
+        total_mse += episode_mse / step_counter
+
+    avg_mse = total_mse / num_iter
+    return tf.squeeze(avg_mse)
+
+
+def compute_rmse_single_step(env, policy, num_iter=16):
+    total_rmse = 0.0
+    for _ in range(num_iter):
+        time_step = env.reset()
+        rnn_state = policy.get_initial_state(batch_size=1)
+        episode_rmse = 0.0
+        step_counter = 0
+
+        while not time_step.is_last():
+            step_counter = + 1
+            action_step, rnn_state, _ = policy.action(time_step, rnn_state)
+            time_step = env.step(action_step)
+            # agent forecast
+            agent_pred = tf.squeeze(action_step)
+            ground_truth = time_step.reward
+            episode_rmse += (agent_pred - ground_truth) ** 2
+
+        total_rmse += tf.math.square(episode_rmse / step_counter)
+
+    avg_rmse = total_rmse / num_iter
+    return tf.squeeze(avg_rmse)
