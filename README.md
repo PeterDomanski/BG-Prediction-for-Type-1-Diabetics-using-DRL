@@ -24,7 +24,7 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
   - load data from csv file (time series data) <br/>
 - environment.py
   - load data and set attributes, e.g., window size
-  - define state := fixed=size window
+  - define state := fixed-size window
   - reward := absolute difference of forecast and ground truth 
     - normalization of reward in range [0, 1]
     - idea
