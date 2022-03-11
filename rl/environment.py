@@ -81,7 +81,7 @@ class TsForecastingMultiStepEnv(gym.Env):
         if self.evaluation:
             reward = self.current_data_pos
         else:
-            reward = np.exp(-tf.math.reduce_mean(action - self.current_ground_truth))
+            reward = np.exp(-tf.math.reduce_mean(tf.math.abs(action - self.current_ground_truth)))
             # get next observation -> fixed size window
         self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
         # set current data position and ground truth for next step
