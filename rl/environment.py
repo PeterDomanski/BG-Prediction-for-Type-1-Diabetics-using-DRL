@@ -12,9 +12,8 @@ class TsForecastingSingleStepEnv(gym.Env):
         self.window_length = 5
         self.current_data_pos = 0
         self.current_ground_truth = None
+        self.state = None
         # define observation space
-        # self.observation_space = Box(np.expand_dims(np.array([0.0 for _ in range(self.window_length)]), 0),
-        #                              np.expand_dims(np.array([2.0 for _ in range(self.window_length)]), 0))
         self.observation_space = Box(np.array([0.0 for _ in range(self.window_length)]),
                                      np.array([2.0 for _ in range(self.window_length)]))
         # define action space
@@ -22,29 +21,28 @@ class TsForecastingSingleStepEnv(gym.Env):
         self.action_space = Box(np.array([0.0]), np.array([2.0]))
 
     def step(self, action):
+        # calculate reward -> reward scale: [0, 1]
+        reward = np.squeeze(np.exp(-np.abs(action - self.current_ground_truth)))
         # get next observation -> fixed size window
-        state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
+        self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
         # set current data position and ground truth for next step
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos]
         self.current_data_pos += 1
-        # calculate reward -> reward scale: [0, 1]
-        reward = np.squeeze(np.exp(-np.abs(action - self.current_ground_truth)))
         # done is True at the end of the time series data -> restart at random position of the series
-        if self.current_data_pos < (self.num_data_points - self.window_length):
+        if self.current_data_pos + self.window_length < self.num_data_points:
             done = False
         else:
             done = True
-
-        return state, reward, done, ()
+        return self.state, reward, done, ()
 
     def reset(self):
-        self.current_data_pos = np.random.randint(low=0, high=len(self.ts_data) - self.window_length)
-        state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
+        self.current_data_pos = np.random.randint(low=0, high=self.num_data_points - (2 * self.window_length + 1))
+        self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos]
         self.current_data_pos += 1
-        return state
+        return self.state
 
     def render(self, mode='human'):
         pass
