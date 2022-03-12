@@ -99,7 +99,9 @@ class TsForecastingMultiStepEnv(gym.Env):
         if self.evaluation:
             self.current_data_pos = 0
         else:
-            self.current_data_pos = np.random.randint(low=0, high=self.num_data_points - (2 * self.window_length + 1))
+            self.current_data_pos = np.random.randint(
+                low=0,
+                high=self.num_data_points - (2 * self.window_length + 2 * self.forecasting_steps))
         self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos:self.current_data_pos+self.forecasting_steps]
