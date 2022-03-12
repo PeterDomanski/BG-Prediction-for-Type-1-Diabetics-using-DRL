@@ -41,8 +41,9 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
   - reward := absolute difference of forecast and ground truth 
     - normalization of reward in range [0, 1]
     - idea
-      - small absolute difference <-> high reward
-      - large absolute difference <-> low reward
+      - small absolute difference <-> high reward: r=1
+      - large absolute difference <-> low reward: r=0
+        - Absolute difference normalized in [0, 1] 
         - Linear definition
         ![Alt text](./images/reward_fct_lin.png?raw=true "Reward function exp")
         - Exponential definition
