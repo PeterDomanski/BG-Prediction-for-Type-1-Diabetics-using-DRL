@@ -30,6 +30,10 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step"):
     log_dir = "./logs/" + "log" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     file_writer = tf.summary.create_file_writer(log_dir)
     logging.get_absl_handler().use_absl_log_file(program_name="log", log_dir=log_dir)
+    # save gin's operative config to a file
+    config_txt_file = open(log_dir + "/gin_config.txt", "w+")
+    config_txt_file.write(gin.operative_config_str())
+    config_txt_file.close()
     # load data set
     ts_train_data = dataset.load_csv_dataset(path_to_train_data)
     if path_to_eval_data != "":

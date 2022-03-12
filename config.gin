@@ -4,7 +4,7 @@ run.path_to_train_data = "./data/RasberryPi.csv"
 # if path to eval data empty only training data is used
 # Ohio data: /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing.csv
 run.path_to_eval_data = ""
-run.setup = "multi_step"
+run.setup = "single_step"
 
 rl_training_loop.max_train_steps = 1000
 rl_training_loop.eval_interval = 10
@@ -14,7 +14,7 @@ TsForecastingSingleStepEnv.window_size = 5
 # CGM: min 35.0, max 500.0
 TsForecastingSingleStepEnv.min_attribute_val = 35.0
 TsForecastingSingleStepEnv.max_attribute_val = 500.0
-TsForecastingSingleStepEnv.reward_def = "negative_abs_diff"
+TsForecastingSingleStepEnv.reward_def = "abs_diff"
 
 # multi step forecasting
 TsForecastingMultiStepEnv.window_size = 12

@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 import tensorflow as tf
+from absl import logging
 from tf_agents.environments.gym_wrapper import GymWrapper
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
 from gym.spaces import Box
@@ -33,20 +34,20 @@ class TsForecastingSingleStepEnv(gym.Env):
         else:
             if self.reward_def == "abs_diff":
                 # normalize in [0, 1]
-                reward = np.abs(action - self.current_ground_truth)
+                reward = np.squeeze(np.abs(action - self.current_ground_truth))
                 # normalization
                 reward /= (self.max_attribute_val - self.min_attribute_val)
                 # large diff -> small reward, small diff -> large reward
                 reward = -1 * (reward - 1)
             elif self.reward_def == "linear":
                 # calculate reward -> reward scale: [0, 1]
-                reward = np.abs(action - self.current_ground_truth)
+                reward = np.squeeze(np.abs(action - self.current_ground_truth))
                 reward = (-1 / self.max_attribute_val - self.min_attribute_val) * reward + 1
             elif self.reward_def == "exponential":
                 # calculate reward -> reward scale: [0, 1]
                 reward = np.squeeze(np.exp(-np.abs(action - self.current_ground_truth)))
             else:
-                print("Reward definition {} is not supported".format(self.reward_def))
+                logging.info("Reward definition {} is not supported".format(self.reward_def))
 
         # get next observation -> fixed size window
         self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
@@ -116,7 +117,7 @@ class TsForecastingMultiStepEnv(gym.Env):
             elif self.reward_def == "exponential":
                 reward = np.exp(-tf.math.reduce_mean(tf.math.abs(action - self.current_ground_truth)))
             else:
-                print("Reward definition {} is not supported".format(self.reward_def))
+                logging.info("Reward definition {} is not supported".format(self.reward_def))
             # get next observation -> fixed size window
         self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
         # set current data position and ground truth for next step
