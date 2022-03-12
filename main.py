@@ -25,7 +25,7 @@ def main(args):
 
 
 @gin.configurable
-def run(path_to_train_data="", path_to_eval_data="", setup="single_step"):
+def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_algorithm="ddpg"):
     # logging
     log_dir = "./logs/" + "log" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     file_writer = tf.summary.create_file_writer(log_dir)
@@ -59,7 +59,7 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step"):
     tf_train_env = environment.get_tf_environment(train_env)
     tf_eval_env = environment.get_tf_environment(eval_env)
     # set up RL agent
-    agent = rl_agent.get_rl_agent(tf_train_env)
+    agent = rl_agent.get_rl_agent(tf_train_env, rl_algorithm)
     # train agent on environment
     training.rl_training_loop(tf_train_env, tf_eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps)
 
