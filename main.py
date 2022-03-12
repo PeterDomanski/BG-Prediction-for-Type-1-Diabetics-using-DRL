@@ -34,6 +34,8 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step"):
     ts_train_data = dataset.load_csv_dataset(path_to_train_data)
     if path_to_eval_data != "":
         ts_eval_data = dataset.load_csv_dataset(path_to_eval_data)
+    else:
+        ts_eval_data = ts_train_data
     # create environment
     if setup == "single_step":
         train_env = environment.TsForecastingSingleStepEnv(ts_train_data)

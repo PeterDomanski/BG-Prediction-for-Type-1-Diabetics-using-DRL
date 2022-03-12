@@ -9,7 +9,9 @@ import gin
 
 @gin.configurable
 class TsForecastingSingleStepEnv(gym.Env):
-    def __init__(self, ts_data, window_size=5, min_attribute_val=35.0, max_attribute_val=500.0, evaluation=False):
+    def __init__(self, ts_data, window_size=5, min_attribute_val=35.0, max_attribute_val=500.0,
+                 reward_def="abs_diff", evaluation=False):
+        self.reward_def = reward_def
         self.evaluation = evaluation
         self.ts_data = ts_data
         self.num_data_points = len(ts_data)
@@ -17,6 +19,8 @@ class TsForecastingSingleStepEnv(gym.Env):
         self.current_data_pos = 0
         self.current_ground_truth = None
         self.state = None
+        self.max_attribute_val = max_attribute_val
+        self.min_attribute_val = min_attribute_val
         # define observation space
         self.observation_space = Box(np.array([min_attribute_val for _ in range(self.window_length)]),
                                      np.array([max_attribute_val for _ in range(self.window_length)]))
@@ -27,8 +31,22 @@ class TsForecastingSingleStepEnv(gym.Env):
         if self.evaluation:
             reward = self.current_ground_truth
         else:
-            # calculate reward -> reward scale: [0, 1]
-            reward = np.squeeze(np.exp(-np.abs(action - self.current_ground_truth)))
+            if self.reward_def == "abs_diff":
+                # normalize in [0, 1]
+                reward = np.abs(action - self.current_ground_truth)
+                # normalization
+                reward /= (self.max_attribute_val - self.min_attribute_val)
+                # large diff -> small reward, small diff -> large reward
+                reward = -1 * (reward - 1)
+            elif self.reward_def == "linear":
+                # calculate reward -> reward scale: [0, 1]
+                reward = np.abs(action - self.current_ground_truth)
+                reward = (-1 / self.max_attribute_val - self.min_attribute_val) * reward + 1
+            elif self.reward_def == "exponential":
+                # calculate reward -> reward scale: [0, 1]
+                reward = np.squeeze(np.exp(-np.abs(action - self.current_ground_truth)))
+            else:
+                print("Reward definition {} is not supported".format(self.reward_def))
 
         # get next observation -> fixed size window
         self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
@@ -61,7 +79,8 @@ class TsForecastingSingleStepEnv(gym.Env):
 @gin.configurable
 class TsForecastingMultiStepEnv(gym.Env):
     def __init__(self, ts_data, window_size=12, forecasting_steps=5, min_attribute_val=35.0, max_attribute_val=500.0,
-                 evaluation=False):
+                 reward_def="abs_diff", evaluation=False):
+        self.reward_def = reward_def
         self.evaluation = evaluation
         self.ts_data = ts_data
         self.num_data_points = len(ts_data)
@@ -70,6 +89,8 @@ class TsForecastingMultiStepEnv(gym.Env):
         self.current_data_pos = 0
         self.current_ground_truth = None
         self.state = None
+        self.min_attribute_val = min_attribute_val
+        self.max_attribute_val = max_attribute_val
         # define observation space
         self.observation_space = Box(np.array([min_attribute_val for _ in range(self.window_length)]),
                                      np.array([max_attribute_val for _ in range(self.window_length)]))
@@ -81,7 +102,21 @@ class TsForecastingMultiStepEnv(gym.Env):
         if self.evaluation:
             reward = self.current_data_pos
         else:
-            reward = np.exp(-tf.math.reduce_mean(tf.math.abs(action - self.current_ground_truth)))
+            if self.reward_def == "abs_diff":
+                # normalize in [0, 1]
+                reward = tf.reduce_mean(np.abs(action - self.current_ground_truth))
+                # normalization
+                reward /= (self.max_attribute_val - self.min_attribute_val)
+                # large diff -> small reward, small diff -> large reward
+                reward = -1 * (reward - 1)
+            elif self.reward_def == "linear":
+                # calculate reward -> reward scale: [0, 1]
+                reward = tf.math.reduce_mean(np.abs(action - self.current_ground_truth))
+                reward = (-1 / self.max_attribute_val - self.min_attribute_val) * reward + 1
+            elif self.reward_def == "exponential":
+                reward = np.exp(-tf.math.reduce_mean(tf.math.abs(action - self.current_ground_truth)))
+            else:
+                print("Reward definition {} is not supported".format(self.reward_def))
             # get next observation -> fixed size window
         self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
         # set current data position and ground truth for next step
@@ -101,7 +136,7 @@ class TsForecastingMultiStepEnv(gym.Env):
         else:
             self.current_data_pos = np.random.randint(
                 low=0,
-                high=self.num_data_points - (2 * self.window_length + 2 * self.forecasting_steps))
+                high=self.num_data_points - 2 * (self.window_length + self.forecasting_steps))
         self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos:self.current_data_pos+self.forecasting_steps]

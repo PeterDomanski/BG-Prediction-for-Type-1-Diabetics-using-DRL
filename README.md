@@ -6,7 +6,7 @@ Here is an overview of the proposed methodology:
 
 ### Configuration options of the framework (conig.gin) <br/>
     - path_to_train_data [str]: specifiy path to csv training data set
-    - path_to_eval_data [str]: specify path to csv testing data set <br/>
+    - path_to_eval_data [str]: specify path to csv testing data set 
         Note: if path is empty, training data is used for evaluation
     - setup [str]: specify setup (currently single_step and multi_step)
     - max_train_steps [int]: specify max number of training steps
@@ -15,6 +15,8 @@ Here is an overview of the proposed methodology:
     - min_attribute_val [float]: specify minimum value of attribute, e.g., CGM
     - max_attribute_val [float]: specify maximum value of attribute, e.g., CGM
     - forecasting_steps [int]: specify number of steps to forecast in multi step scenario
+    - reward_definition [str]: specify which reward function to use
+        Options: abs_diff, linear, exponential
 
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)
@@ -51,7 +53,7 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
 
 ### TODO's
 - Continuous or discrete action space -> should prediction, here CGM, be continuous or discrete?
-- Reward function design
+- Reward function design, e.g., linear reward definition
 - Hyperparameter tuning
 - More configuration options
 
