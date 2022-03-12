@@ -18,7 +18,8 @@ Here is an overview of the proposed methodology:
     - reward_def [str]: specify which reward function to use
         Options: abs_diff, linear, exponential
     - rl_algorithm [str]: specify which RL algorithm to use
-        Options: ddpg, sac (work in progress), ppo ("-"), dqn ("-"), td3, reinforce  
+        Options: ddpg, td3, reinforce
+        Work in progress: sac, ppo, dqn
 
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)
@@ -42,7 +43,10 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
     - idea
       - small absolute difference <-> high reward
       - large absolute difference <-> low reward
-      ![Alt text](./images/reward_fct.png?raw=true "Reward function")
+        - Linear definition
+        ![Alt text](./images/reward_fct_lin.png?raw=true "Reward function exp")
+        - Exponential definition
+        ![Alt text](./images/reward_fct_exp.png?raw=true "Reward function exp")
     - Possible to try different values of `a` for slower/faster decrease or shift reward function in range [-1, 1] 
   - reset -> random starting point in (sequential) stream of the data
 - agent.py
