@@ -10,7 +10,7 @@ import gin
 
 @gin.configurable
 class TsForecastingSingleStepEnv(gym.Env):
-    def __init__(self, ts_data, window_size=5, min_attribute_val=35.0, max_attribute_val=500.0,
+    def __init__(self, ts_data, rl_algorithm, window_size=5, min_attribute_val=35.0, max_attribute_val=500.0,
                  reward_def="abs_diff", evaluation=False):
         self.reward_def = reward_def
         self.evaluation = evaluation
@@ -26,9 +26,10 @@ class TsForecastingSingleStepEnv(gym.Env):
         self.observation_space = Box(np.array([min_attribute_val for _ in range(self.window_length)]),
                                      np.array([max_attribute_val for _ in range(self.window_length)]))
         # define action space
-        self.action_space = Box(np.array([min_attribute_val]), np.array([max_attribute_val]))
-        # TODO: dqn needs scalar action specification
-        # self.action_space = Box(np.array(min_attribute_val), np.array(max_attribute_val))
+        if rl_algorithm == "dqn":
+            self.action_space = Box(np.array(min_attribute_val), np.array(max_attribute_val))
+        else:
+            self.action_space = Box(np.array([min_attribute_val]), np.array([max_attribute_val]))
 
     def step(self, action):
         if self.evaluation:

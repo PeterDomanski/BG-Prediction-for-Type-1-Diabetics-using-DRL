@@ -18,8 +18,8 @@ Here is an overview of the proposed methodology:
     - reward_def [str]: specify which reward function to use
         Options: abs_diff, linear, exponential
     - rl_algorithm [str]: specify which RL algorithm to use
-        Options: ddpg, td3, reinforce
-        Work in progress: sac, ppo, dqn
+        Options: ddpg, td3, reinforce, ppo, sac, dqn
+        Note: dqn only for single step; tf_agents only supoort scalar actions 
 
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)
@@ -44,7 +44,7 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
       - small absolute difference <-> high reward: r=1
       - large absolute difference <-> low reward: r=0
         - Absolute difference normalized in [0, 1] 
-        - Linear definition
+        - Linear definition  h
         ![Alt text](./images/reward_fct_lin.png?raw=true "Reward function exp")
         - Exponential definition
         ![Alt text](./images/reward_fct_exp.png?raw=true "Reward function exp")

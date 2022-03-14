@@ -5,7 +5,7 @@ run.path_to_train_data = "./data/RasberryPi.csv"
 # Ohio data: /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing.csv
 run.path_to_eval_data = ""
 run.setup = "single_step"
-run.rl_algorithm = "reinforce"
+run.rl_algorithm = "dqn"
 
 rl_training_loop.max_train_steps = 1000
 rl_training_loop.eval_interval = 10
@@ -24,3 +24,7 @@ TsForecastingMultiStepEnv.forecasting_steps = 5
 TsForecastingMultiStepEnv.min_attribute_val = 0.0
 TsForecastingMultiStepEnv.max_attribute_val = 5.0
 TsForecastingMultiStepEnv = "abs_diff"
+
+
+
+

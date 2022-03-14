@@ -42,11 +42,11 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
         ts_eval_data = ts_train_data
     # create environment
     if setup == "single_step":
-        train_env = environment.TsForecastingSingleStepEnv(ts_train_data)
+        train_env = environment.TsForecastingSingleStepEnv(ts_train_data, rl_algorithm=rl_algorithm)
         if path_to_eval_data != "":
-            eval_env = environment.TsForecastingSingleStepEnv(ts_eval_data, evaluation=True)
+            eval_env = environment.TsForecastingSingleStepEnv(ts_eval_data, evaluation=True, rl_algorithm=rl_algorithm)
         else:
-            eval_env = environment.TsForecastingSingleStepEnv(ts_train_data, evaluation=True)
+            eval_env = environment.TsForecastingSingleStepEnv(ts_train_data, evaluation=True, rl_algorithm=rl_algorithm)
         forecasting_steps = 1
     elif setup == "multi_step":
         train_env = environment.TsForecastingMultiStepEnv(ts_train_data)

@@ -8,6 +8,9 @@ from tf_agents.agents.dqn import dqn_agent
 from tf_agents.agents.td3 import td3_agent
 from tf_agents.agents.reinforce import reinforce_agent
 from tf_agents.networks import actor_distribution_rnn_network, value_rnn_network, q_rnn_network
+from tf_agents.agents.sac import tanh_normal_projection_network
+from tf_agents.train.utils import spec_utils
+from tf_agents.train.utils import strategy_utils
 
 
 def get_rl_agent(train_env, rl_algorithm="ddpg"):
@@ -30,16 +33,22 @@ def get_rl_agent(train_env, rl_algorithm="ddpg"):
             target_update_period=100
         )
     elif rl_algorithm == "sac":
-        # TODO: specify correct actor and critic networks
-        actor_net = actor_rnn_network.ActorRnnNetwork(observation_spec, action_spec)
-        critic_net = critic_rnn_network.CriticRnnNetwork((observation_spec, action_spec),
-                                                         lstm_size=(40,))
+        critic_net = critic_rnn_network.CriticRnnNetwork(
+            (observation_spec, action_spec),
+            lstm_size=(40,)
+        )
+        actor_net = tf_agents.networks.actor_distribution_rnn_network.ActorDistributionRnnNetwork(
+            observation_spec,
+            action_spec,
+            lstm_size=(40,),
+            continuous_projection_net=tanh_normal_projection_network.TanhNormalProjectionNetwork
+        )
 
         agent = sac_agent.SacAgent(
             time_step_spec,
             action_spec,
-            actor_net,
-            critic_net,
+            actor_network=actor_net,
+            critic_network=critic_net,
             actor_optimizer=tf.keras.optimizers.Adam(),
             critic_optimizer=tf.keras.optimizers.Adam(),
             alpha_optimizer=tf.keras.optimizers.Adam(),
@@ -47,15 +56,10 @@ def get_rl_agent(train_env, rl_algorithm="ddpg"):
         )
 
     elif rl_algorithm == "ppo":
-        # TODO: tf_agents PPO does work with RNN actor network
-        # actor_net = actor_rnn_network.ActorRnnNetwork(
-        #     observation_spec,
-        #     action_spec,
-        #     lstm_size=(40,)
-        # )
-        actor_net = tf_agents.networks.actor_distribution_network.ActorDistributionNetwork(
+        actor_net = tf_agents.networks.actor_distribution_rnn_network.ActorDistributionRnnNetwork(
             observation_spec,
             action_spec,
+            lstm_size=(40,)
         )
         value_net = value_rnn_network.ValueRnnNetwork(
             observation_spec,
