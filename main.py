@@ -30,10 +30,6 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
     log_dir = "./logs/" + "log" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     file_writer = tf.summary.create_file_writer(log_dir)
     logging.get_absl_handler().use_absl_log_file(program_name="log", log_dir=log_dir)
-    # save gin's operative config to a file
-    config_txt_file = open(log_dir + "/gin_config.txt", "w+")
-    config_txt_file.write(gin.operative_config_str())
-    config_txt_file.close()
     # load data set
     ts_train_data = dataset.load_csv_dataset(path_to_train_data)
     if path_to_eval_data != "":
@@ -53,9 +49,9 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
     elif setup == "multi_step":
         train_env = environment.TsForecastingMultiStepEnv(ts_train_data)
         if path_to_eval_data != "":
-            eval_env = environment.TsForecastingMultiStepEnv(ts_eval_data, evaluation=True)
+            eval_env = environment.TsForecastingMultiStepEnv(ts_eval_data, evaluation=True, max_window_count=-1)
         else:
-            eval_env = environment.TsForecastingMultiStepEnv(ts_train_data, evaluation=True)
+            eval_env = environment.TsForecastingMultiStepEnv(ts_train_data, evaluation=True, max_window_count=-1)
         forecasting_steps = eval_env.forecasting_steps
     # get TF environment
     tf_train_env = environment.get_tf_environment(train_env)
@@ -65,6 +61,11 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
     # train agent on environment
     training.rl_training_loop(tf_train_env, tf_eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps,
                               rl_algorithm)
+
+    # save gin's operative config to a file
+    config_txt_file = open(log_dir + "/gin_config.txt", "w+")
+    config_txt_file.write(gin.operative_config_str())
+    config_txt_file.close()
 
 
 if __name__ == '__main__':

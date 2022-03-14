@@ -16,7 +16,7 @@ def rl_training_loop(train_env, eval_env, agent, ts_eval_data, file_writer, setu
     collect_driver = get_collect_driver(train_env,
                                         agent.collect_policy,
                                         [replay_buffer.add_batch],
-                                        num_iter=16,
+                                        num_iter=8,
                                         driver_type="episode")
     for i in range(max_train_steps):
         if i % eval_interval == 0:
