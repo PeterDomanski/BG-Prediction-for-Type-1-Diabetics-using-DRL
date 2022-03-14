@@ -44,9 +44,11 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
     if setup == "single_step":
         train_env = environment.TsForecastingSingleStepEnv(ts_train_data, rl_algorithm=rl_algorithm)
         if path_to_eval_data != "":
-            eval_env = environment.TsForecastingSingleStepEnv(ts_eval_data, evaluation=True, rl_algorithm=rl_algorithm)
+            eval_env = environment.TsForecastingSingleStepEnv(ts_eval_data, evaluation=True, rl_algorithm=rl_algorithm,
+                                                              max_window_count=-1)
         else:
-            eval_env = environment.TsForecastingSingleStepEnv(ts_train_data, evaluation=True, rl_algorithm=rl_algorithm)
+            eval_env = environment.TsForecastingSingleStepEnv(ts_train_data, evaluation=True, rl_algorithm=rl_algorithm,
+                                                              max_window_count=-1)
         forecasting_steps = 1
     elif setup == "multi_step":
         train_env = environment.TsForecastingMultiStepEnv(ts_train_data)
@@ -61,7 +63,8 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
     # set up RL agent
     agent = rl_agent.get_rl_agent(tf_train_env, rl_algorithm)
     # train agent on environment
-    training.rl_training_loop(tf_train_env, tf_eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps)
+    training.rl_training_loop(tf_train_env, tf_eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps,
+                              rl_algorithm)
 
 
 if __name__ == '__main__':

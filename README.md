@@ -20,6 +20,8 @@ Here is an overview of the proposed methodology:
     - rl_algorithm [str]: specify which RL algorithm to use
         Options: ddpg, td3, reinforce, ppo, sac, dqn
         Note: dqn only for single step; tf_agents only supoort scalar actions 
+    - max_window_count [int]: specify the maximum number of windows to use per training iteration
+        Note: specify -1 if you want to use as much windows as possible with random starting point
 
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)
@@ -64,4 +66,5 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
 - Reward function design, e.g., linear reward definition
 - Hyperparameter tuning
 - More configuration options
+- Test for single step and multi step scenarios with debug data and different RL algorithms
 

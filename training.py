@@ -1,3 +1,5 @@
+import logging
+
 import gin
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.drivers import dynamic_step_driver, dynamic_episode_driver
@@ -6,7 +8,7 @@ import evaluation
 
 
 @gin.configurable
-def rl_training_loop(train_env, eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps,
+def rl_training_loop(train_env, eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps, rl_algorithm,
                      max_train_steps=1000, eval_interval=100):
     # replay buffer for data collection
     replay_buffer = get_replay_buffer(agent, batch_size=1)
@@ -14,7 +16,7 @@ def rl_training_loop(train_env, eval_env, agent, ts_eval_data, file_writer, setu
     collect_driver = get_collect_driver(train_env,
                                         agent.collect_policy,
                                         [replay_buffer.add_batch],
-                                        num_iter=8,
+                                        num_iter=16,
                                         driver_type="episode")
     for i in range(max_train_steps):
         if i % eval_interval == 0:
@@ -23,10 +25,12 @@ def rl_training_loop(train_env, eval_env, agent, ts_eval_data, file_writer, setu
                 avg_mae = evaluation.compute_mae_single_step(eval_env, agent.policy)
                 avg_mse = evaluation.compute_mse_single_step(eval_env, agent.policy)
                 avg_rmse = evaluation.compute_rmse_single_step(eval_env, agent.policy)
-            else:
+            elif setup == "mutli_step":
                 avg_mae = evaluation.compute_mae_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
                 avg_mse = evaluation.compute_mse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
                 avg_rmse = evaluation.compute_rmse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
+            else:
+                logging.info("Setup {} not supported".format(setup))
             with file_writer.as_default():
                 tf.summary.scalar("Average Return", avg_return, i)
                 tf.summary.scalar("Average MAE", avg_mae, i)
@@ -35,10 +39,23 @@ def rl_training_loop(train_env, eval_env, agent, ts_eval_data, file_writer, setu
         collect_driver.run()
         experience = replay_buffer.gather_all()
         train_loss = agent.train(experience)
-        # keep track of actor and critic loss
+        # keep track of actor loss
         with file_writer.as_default():
             tf.summary.scalar("Actor Loss", train_loss.loss, i)
         replay_buffer.clear()
+        # keep track of actor network parameters
+        with file_writer.as_default():
+            if rl_algorithm == "ppo":
+                actor_net = agent._actor_net
+            elif rl_algorithm == "reinforce" or \
+                    rl_algorithm == "ddpg" or \
+                    rl_algorithm == "sac" or \
+                    rl_algorithm == "td3":
+                actor_net = agent._actor_network
+            elif rl_algorithm == "dqn":
+                actor_net = agent._q_network
+            for actor_var in actor_net.trainable_variables:
+                tf.summary.histogram(actor_var.name, actor_var, i)
 
 
 @gin.configurable

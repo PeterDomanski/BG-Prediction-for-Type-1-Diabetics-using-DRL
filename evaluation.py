@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def compute_avg_return(env, policy, num_iter=16):
+def compute_avg_return(env, policy, num_iter=1):
     total_return = 0.0
     for _ in range(num_iter):
         time_step = env.reset()
@@ -21,7 +21,7 @@ def compute_avg_return(env, policy, num_iter=16):
     return tf.squeeze(avg_return)
 
 
-def compute_mae_single_step(env, policy, num_iter=16):
+def compute_mae_single_step(env, policy, num_iter=1):
     total_mae = 0.0
     for _ in range(num_iter):
         time_step = env.reset()
@@ -44,7 +44,7 @@ def compute_mae_single_step(env, policy, num_iter=16):
     return tf.squeeze(avg_mae)
 
 
-def compute_mse_single_step(env, policy, num_iter=16):
+def compute_mse_single_step(env, policy, num_iter=1):
     total_mse = 0.0
     for _ in range(num_iter):
         time_step = env.reset()
@@ -67,7 +67,7 @@ def compute_mse_single_step(env, policy, num_iter=16):
     return tf.squeeze(avg_mse)
 
 
-def compute_rmse_single_step(env, policy, num_iter=16):
+def compute_rmse_single_step(env, policy, num_iter=1):
     total_rmse = 0.0
     for _ in range(num_iter):
         time_step = env.reset()
@@ -90,7 +90,7 @@ def compute_rmse_single_step(env, policy, num_iter=16):
     return tf.squeeze(avg_rmse)
 
 
-def compute_mae_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=16):
+def compute_mae_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=1):
     total_mae = 0.0
     for _ in range(num_iter):
         time_step = env.reset()
@@ -114,7 +114,7 @@ def compute_mae_multi_step(env, policy, ts_eval_data, forecasting_steps, num_ite
     return tf.squeeze(avg_mae)
 
 
-def compute_mse_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=16):
+def compute_mse_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=1):
     total_mse = 0.0
     for _ in range(num_iter):
         time_step = env.reset()
@@ -138,7 +138,7 @@ def compute_mse_multi_step(env, policy, ts_eval_data, forecasting_steps, num_ite
     return tf.squeeze(avg_mse)
 
 
-def compute_rmse_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=16):
+def compute_rmse_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=1):
     total_rmse = 0.0
     for _ in range(num_iter):
         time_step = env.reset()

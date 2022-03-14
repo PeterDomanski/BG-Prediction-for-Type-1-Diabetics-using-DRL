@@ -10,13 +10,16 @@ import gin
 
 @gin.configurable
 class TsForecastingSingleStepEnv(gym.Env):
-    def __init__(self, ts_data, rl_algorithm, window_size=5, min_attribute_val=35.0, max_attribute_val=500.0,
-                 reward_def="abs_diff", evaluation=False):
+    def __init__(self, ts_data, rl_algorithm, window_size=5, max_window_count=-1, min_attribute_val=35.0,
+                 max_attribute_val=500.0, reward_def="abs_diff", evaluation=False):
         self.reward_def = reward_def
         self.evaluation = evaluation
         self.ts_data = ts_data
         self.num_data_points = len(ts_data)
         self.window_length = window_size
+        # specify max number of windows to use; -1 to use all windows
+        self.max_window_count = max_window_count
+        self.window_counter = 0
         self.current_data_pos = 0
         self.current_ground_truth = None
         self.state = None
@@ -45,7 +48,7 @@ class TsForecastingSingleStepEnv(gym.Env):
             elif self.reward_def == "linear":
                 # calculate reward -> reward scale: [0, 1]
                 reward = np.squeeze(np.abs(action - self.current_ground_truth))
-                reward = (-1 / self.max_attribute_val - self.min_attribute_val) * reward + 1
+                reward = ((-1 / (self.max_attribute_val - self.min_attribute_val)) * reward) + 1
             elif self.reward_def == "exponential":
                 # calculate reward -> reward scale: [0, 1]
                 reward = np.squeeze(np.exp(-np.abs(action - self.current_ground_truth)))
@@ -58,14 +61,22 @@ class TsForecastingSingleStepEnv(gym.Env):
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos]
         self.current_data_pos += 1
+        self.window_counter += 1
         # done is True at the end of the time series data -> restart at random position of the series
         if self.current_data_pos + self.window_length < self.num_data_points:
-            done = False
+            if self.window_counter != -1:
+                if self.window_counter < self.max_window_count:
+                    done = False
+                else:
+                    done = True
+            else:
+                done = False
         else:
             done = True
         return self.state, reward, done, ()
 
     def reset(self):
+        self.window_counter = 0
         if self.evaluation:
             self.current_data_pos = 0
         else:
@@ -74,6 +85,7 @@ class TsForecastingSingleStepEnv(gym.Env):
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos]
         self.current_data_pos += 1
+        self.window_counter += 1
         return self.state
 
     def render(self, mode='human'):
@@ -82,13 +94,15 @@ class TsForecastingSingleStepEnv(gym.Env):
 
 @gin.configurable
 class TsForecastingMultiStepEnv(gym.Env):
-    def __init__(self, ts_data, window_size=12, forecasting_steps=5, min_attribute_val=35.0, max_attribute_val=500.0,
-                 reward_def="abs_diff", evaluation=False):
+    def __init__(self, ts_data, window_size=12, max_window_count=-1, forecasting_steps=5, min_attribute_val=35.0,
+                 max_attribute_val=500.0, reward_def="abs_diff", evaluation=False):
         self.reward_def = reward_def
         self.evaluation = evaluation
         self.ts_data = ts_data
         self.num_data_points = len(ts_data)
         self.window_length = window_size
+        self.max_window_count = max_window_count
+        self.window_counter = 0
         self.forecasting_steps = forecasting_steps
         self.current_data_pos = 0
         self.current_ground_truth = None
@@ -116,7 +130,7 @@ class TsForecastingMultiStepEnv(gym.Env):
             elif self.reward_def == "linear":
                 # calculate reward -> reward scale: [0, 1]
                 reward = tf.math.reduce_mean(np.abs(action - self.current_ground_truth))
-                reward = (-1 / self.max_attribute_val - self.min_attribute_val) * reward + 1
+                reward = ((-1 / (self.max_attribute_val - self.min_attribute_val)) * reward) + 1
             elif self.reward_def == "exponential":
                 reward = np.exp(-tf.math.reduce_mean(tf.math.abs(action - self.current_ground_truth)))
             else:
@@ -127,9 +141,16 @@ class TsForecastingMultiStepEnv(gym.Env):
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos:self.current_data_pos+self.forecasting_steps]
         self.current_data_pos += self.forecasting_steps
+        self.window_counter += 1
         # done is True at the end of the time series data -> restart at random position of the series
         if self.current_data_pos + self.window_length + self.forecasting_steps < self.num_data_points:
-            done = False
+            if self.max_window_count != -1:
+                if self.window_counter < self.max_window_count:
+                    done = False
+                else:
+                    done = True
+            else:
+                done = False
         else:
             done = True
         return self.state, reward, done, ()
@@ -145,6 +166,7 @@ class TsForecastingMultiStepEnv(gym.Env):
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos:self.current_data_pos+self.forecasting_steps]
         self.current_data_pos += self.forecasting_steps
+        self.window_counter += 1
         return self.state
 
     def render(self, mode='human'):
