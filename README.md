@@ -62,9 +62,8 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
 
 ### TODO's
 - Continuous or discrete action space -> should prediction, here CGM, be continuous or discrete?
-- More RL algorithms
 - Reward function design, e.g., linear reward definition
 - Hyperparameter tuning
 - More configuration options
-- Test for single step and multi step scenarios with debug data and different RL algorithms
+- Tests for single step and multi step scenarios with debug data and different RL algorithms
 
