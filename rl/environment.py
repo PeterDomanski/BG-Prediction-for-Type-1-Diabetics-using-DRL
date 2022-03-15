@@ -64,7 +64,7 @@ class TsForecastingSingleStepEnv(gym.Env):
         self.window_counter += 1
         # done is True at the end of the time series data -> restart at random position of the series
         if self.current_data_pos + self.window_length < self.num_data_points:
-            if self.window_counter != -1:
+            if self.max_window_count != -1:
                 if self.window_counter < self.max_window_count:
                     done = False
                 else:

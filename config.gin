@@ -5,7 +5,7 @@ run.path_to_train_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_ser
 # Ohio data: /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing.csv
 run.path_to_eval_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing.csv"
 run.setup = "single_step"
-run.rl_algorithm = "ppo"
+run.rl_algorithm = "ddpg"
 
 rl_training_loop.max_train_steps = 10000
 rl_training_loop.eval_interval = 100
@@ -17,7 +17,7 @@ TsForecastingSingleStepEnv.min_attribute_val = 35.0
 TsForecastingSingleStepEnv.max_attribute_val = 500.0
 TsForecastingSingleStepEnv.reward_def = "linear"
 # specify max number of windows per RL iteration; -1 to use as much as possible with random starting point
-TsForecastingSingleStepEnv.max_window_count = 10
+TsForecastingSingleStepEnv.max_window_count = 50
 
 # multi step forecasting
 TsForecastingMultiStepEnv.window_size = 12

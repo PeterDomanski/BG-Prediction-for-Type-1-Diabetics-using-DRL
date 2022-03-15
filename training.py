@@ -1,15 +1,15 @@
 import logging
-
 import gin
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.drivers import dynamic_step_driver, dynamic_episode_driver
 import tensorflow as tf
 import evaluation
+import visualization
 
 
 @gin.configurable
-def rl_training_loop(train_env, eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps, rl_algorithm,
-                     max_train_steps=1000, eval_interval=100):
+def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps,
+                     rl_algorithm, total_time_h, max_train_steps=1000, eval_interval=100):
     # replay buffer for data collection
     replay_buffer = get_replay_buffer(agent, batch_size=1)
     # create driver for data collection
@@ -25,6 +25,8 @@ def rl_training_loop(train_env, eval_env, agent, ts_eval_data, file_writer, setu
                 avg_mae = evaluation.compute_mae_single_step(eval_env, agent.policy)
                 avg_mse = evaluation.compute_mse_single_step(eval_env, agent.policy)
                 avg_rmse = evaluation.compute_rmse_single_step(eval_env, agent.policy)
+                # visualization of (scalar) attribute of interest
+                visualization.plot_preds_vs_ground_truth_single_step(log_dir, eval_env, agent, total_time_h, i)
             elif setup == "mutli_step":
                 avg_mae = evaluation.compute_mae_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
                 avg_mse = evaluation.compute_mse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)

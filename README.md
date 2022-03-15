@@ -60,10 +60,16 @@ tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
   - evaluation of forecasts
   - metrics: MAE, MSE, RMSE
 
+### Testing
+![Alt text](./images/unit_tests.png?raw=true "Unit tests")
+We test the different algorithms in a single and multi step scenario on a debug data set (RasberryPi.csv). This 
+data set can be found in the repository in ./data/RasberryPi.csv
+
 ### TODO's
 - Continuous or discrete action space -> should prediction, here CGM, be continuous or discrete?
 - Reward function design, e.g., linear reward definition
 - Hyperparameter tuning
 - More configuration options
+- Visualization of CGM values
 - Tests for single step and multi step scenarios with debug data and different RL algorithms
 

@@ -152,7 +152,7 @@ def compute_rmse_multi_step(env, policy, ts_eval_data, forecasting_steps, num_it
             time_step = env.step(action_step)
             # agent forecast
             agent_pred = tf.squeeze(action_step)
-            ground_truth_pos = ground_truth_pos = int(tf.squeeze(time_step.reward))
+            ground_truth_pos = int(tf.squeeze(time_step.reward))
             ground_truth = ts_eval_data[ground_truth_pos - forecasting_steps:ground_truth_pos]
             episode_rmse += tf.math.reduce_mean((agent_pred - ground_truth) ** 2)
 
