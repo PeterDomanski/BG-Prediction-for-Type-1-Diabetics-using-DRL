@@ -6,8 +6,9 @@ run.path_to_train_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_ser
 run.path_to_eval_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing.csv"
 run.setup = "single_step"
 run.rl_algorithm = "ddpg"
+run.use_gpu = True
 
-rl_training_loop.max_train_steps = 10000
+rl_training_loop.max_train_steps = 1
 rl_training_loop.eval_interval = 100
 
 # single step forecasting

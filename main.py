@@ -25,15 +25,11 @@ def main(args):
 
 
 @gin.configurable
-def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_algorithm="ddpg"):
+def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_algorithm="ddpg", use_gpu=False):
     # logging
     log_dir = "./logs/" + "log" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     file_writer = tf.summary.create_file_writer(log_dir)
     logging.get_absl_handler().use_absl_log_file(program_name="log", log_dir=log_dir)
-    # save gin's operative config to a file
-    config_txt_file = open(log_dir + "/gin_config.txt", "w+")
-    config_txt_file.write(gin.operative_config_str())
-    config_txt_file.close()
     # load data set
     ts_train_data, total_time_h = dataset.load_csv_dataset(path_to_train_data)
     if path_to_eval_data != "":
@@ -61,10 +57,23 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
     tf_train_env = environment.get_tf_environment(train_env)
     tf_eval_env = environment.get_tf_environment(eval_env)
     # set up RL agent
-    agent = rl_agent.get_rl_agent(tf_train_env, rl_algorithm)
+    agent = rl_agent.get_rl_agent(tf_train_env, rl_algorithm, use_gpu)
+    # save gin's operative config to a file before training
+    config_txt_file = open(log_dir + "/gin_config.txt", "w+")
+    config_txt_file.write("Configuration options available before training \n")
+    config_txt_file.write("\n")
+    config_txt_file.write(gin.operative_config_str())
+    config_txt_file.close()
     # train agent on environment
     training.rl_training_loop(log_dir, tf_train_env, tf_eval_env, agent, ts_eval_data, file_writer, setup,
                               forecasting_steps, rl_algorithm, total_time_h)
+    # save gin's operative config to a file after training
+    config_txt_file = open(log_dir + "/gin_config.txt", "a")
+    config_txt_file.write("\n")
+    config_txt_file.write("Configuration options available after training \n")
+    config_txt_file.write("\n")
+    config_txt_file.write(gin.operative_config_str())
+    config_txt_file.close()
 
 
 if __name__ == '__main__':

@@ -38,26 +38,28 @@ def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_wri
                 tf.summary.scalar("Average MAE", avg_mae, i)
                 tf.summary.scalar("Average MSE", avg_mse, i)
                 tf.summary.scalar("Average RMSE", avg_rmse, i)
+            # keep track of actor network parameters
+            with file_writer.as_default():
+                if rl_algorithm == "ppo":
+                    actor_net = agent._actor_net
+                elif rl_algorithm == "reinforce" or \
+                        rl_algorithm == "ddpg" or \
+                        rl_algorithm == "sac" or \
+                        rl_algorithm == "td3":
+                    actor_net = agent._actor_network
+                elif rl_algorithm == "dqn":
+                    actor_net = agent._q_network
+                for actor_var in actor_net.trainable_variables:
+                    tf.summary.histogram(actor_var.name, actor_var, i)
         collect_driver.run()
         experience = replay_buffer.gather_all()
         train_loss = agent.train(experience)
         # keep track of actor loss
-        with file_writer.as_default():
-            tf.summary.scalar("Actor Loss", train_loss.loss, i)
+        if i % eval_interval == 0:
+            with file_writer.as_default():
+                tf.summary.scalar("Actor Loss", train_loss.loss, i)
+
         replay_buffer.clear()
-        # keep track of actor network parameters
-        with file_writer.as_default():
-            if rl_algorithm == "ppo":
-                actor_net = agent._actor_net
-            elif rl_algorithm == "reinforce" or \
-                    rl_algorithm == "ddpg" or \
-                    rl_algorithm == "sac" or \
-                    rl_algorithm == "td3":
-                actor_net = agent._actor_network
-            elif rl_algorithm == "dqn":
-                actor_net = agent._q_network
-            for actor_var in actor_net.trainable_variables:
-                tf.summary.histogram(actor_var.name, actor_var, i)
 
 
 @gin.configurable

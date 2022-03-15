@@ -22,6 +22,7 @@ Here is an overview of the proposed methodology:
         Note: dqn only for single step; tf_agents only supoort scalar actions 
     - max_window_count [int]: specify the maximum number of windows to use per training iteration
         Note: specify -1 if you want to use as much windows as possible with random starting point
+    - use_gpu [bool]: Specify to explictily use a GPU 
 
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)
@@ -70,6 +71,6 @@ data set can be found in the repository in ./data/RasberryPi.csv
 - Reward function design, e.g., linear reward definition
 - Hyperparameter tuning
 - More configuration options
-- Visualization of CGM values
+- Visualization of CGM values (multi step scenario)
 - Tests for single step and multi step scenarios with debug data and different RL algorithms
 
