@@ -26,7 +26,8 @@ def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_wri
                 avg_mse = evaluation.compute_mse_single_step(eval_env, agent.policy)
                 avg_rmse = evaluation.compute_rmse_single_step(eval_env, agent.policy)
                 # visualization of (scalar) attribute of interest
-                visualization.plot_preds_vs_ground_truth_single_step(log_dir, eval_env, agent, total_time_h, i)
+                visualization.plot_preds_vs_ground_truth_single_step(log_dir, eval_env, agent, total_time_h,
+                                                                     max_attribute_val, i)
             elif setup == "mutli_step":
                 avg_mae = evaluation.compute_mae_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
                 avg_mse = evaluation.compute_mse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
