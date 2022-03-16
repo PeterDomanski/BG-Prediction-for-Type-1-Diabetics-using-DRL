@@ -39,6 +39,7 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
     # create environment
     if setup == "single_step":
         train_env = environment.TsForecastingSingleStepEnv(ts_train_data, rl_algorithm=rl_algorithm)
+        max_attribute_val = train_env.max_attribute_val
         if path_to_eval_data != "":
             eval_env = environment.TsForecastingSingleStepEnv(ts_eval_data, evaluation=True, rl_algorithm=rl_algorithm,
                                                               max_window_count=-1)
@@ -66,7 +67,7 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
     config_txt_file.close()
     # train agent on environment
     training.rl_training_loop(log_dir, tf_train_env, tf_eval_env, agent, ts_eval_data, file_writer, setup,
-                              forecasting_steps, rl_algorithm, total_time_h)
+                              forecasting_steps, rl_algorithm, total_time_h, max_attribute_val)
     # save gin's operative config to a file after training
     config_txt_file = open(log_dir + "/gin_config.txt", "a")
     config_txt_file.write("\n")

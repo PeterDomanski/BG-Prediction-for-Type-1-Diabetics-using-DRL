@@ -22,7 +22,7 @@ class TsForecastingSingleStepEnv(gym.Env):
         self.window_counter = 0
         self.current_data_pos = 0
         self.current_ground_truth = None
-        self.state = None
+        # self.state = None
         self.max_attribute_val = max_attribute_val
         self.min_attribute_val = min_attribute_val
         # define observation space
@@ -42,21 +42,32 @@ class TsForecastingSingleStepEnv(gym.Env):
                 # normalize in [0, 1]
                 reward = np.squeeze(np.abs(action - self.current_ground_truth))
                 # normalization
-                reward /= (self.max_attribute_val - self.min_attribute_val)
+                # reward /= (self.max_attribute_val - self.min_attribute_val)
                 # large diff -> small reward, small diff -> large reward
-                reward = -1 * (reward - 1)
+                # reward = -1 * (reward - 1)
+                reward *= -1
+            elif self.reward_def == "squared_diff":
+                reward = tf.squeeze(tf.math.squared_difference(action, self.current_ground_truth))
+                # normalization
+                # reward /= (self.max_attribute_val - self.min_attribute_val) ** 2
+                # large diff -> small reward, small diff -> large reward
+                # reward = -1 * (reward - 1)
+                reward *= -1
             elif self.reward_def == "linear":
                 # calculate reward -> reward scale: [0, 1]
-                reward = np.squeeze(np.abs(action - self.current_ground_truth))
-                reward = ((-1 / (self.max_attribute_val - self.min_attribute_val)) * reward) + 1
+                # reward = np.squeeze(np.abs(action - self.current_ground_truth))
+                reward = tf.squeeze(tf.math.squared_difference(action, self.current_ground_truth))
+                # reward = ((-1 / (self.max_attribute_val - self.min_attribute_val)) * reward) + 1
+                reward = ((-1 / (self.max_attribute_val - self.min_attribute_val) ** 2) * reward) + 1
             elif self.reward_def == "exponential":
                 # calculate reward -> reward scale: [0, 1]
-                reward = np.squeeze(np.exp(-np.abs(action - self.current_ground_truth)))
+                # reward = np.squeeze(np.exp(-np.abs(action - self.current_ground_truth)))
+                reward = tf.squeeze(tf.math.exp(-tf.math.squared_difference(action, self.current_ground_truth)))
             else:
                 logging.info("Reward definition {} is not supported".format(self.reward_def))
 
         # get next observation -> fixed size window
-        self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
+        state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
         # set current data position and ground truth for next step
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos]
@@ -73,7 +84,7 @@ class TsForecastingSingleStepEnv(gym.Env):
                 done = False
         else:
             done = True
-        return self.state, reward, done, ()
+        return state, reward, done, ()
 
     def reset(self):
         self.window_counter = 0
@@ -81,12 +92,12 @@ class TsForecastingSingleStepEnv(gym.Env):
             self.current_data_pos = 0
         else:
             self.current_data_pos = np.random.randint(low=0, high=self.num_data_points - (2 * self.window_length + 1))
-        self.state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
+        state = self.ts_data[self.current_data_pos:self.current_data_pos + self.window_length].values
         self.current_data_pos += self.window_length
         self.current_ground_truth = self.ts_data[self.current_data_pos]
         self.current_data_pos += 1
         self.window_counter += 1
-        return self.state
+        return state
 
     def render(self, mode='human'):
         pass

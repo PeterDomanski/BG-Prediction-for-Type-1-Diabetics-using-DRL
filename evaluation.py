@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 
-def compute_avg_return(env, policy, num_iter=1):
+def compute_avg_return(env, policy, num_iter=16, normalize=False):
     total_return = 0.0
     for _ in range(num_iter):
         time_step = env.reset()
@@ -15,7 +15,10 @@ def compute_avg_return(env, policy, num_iter=1):
             episode_return += time_step.reward
             time_series_counter += 1
 
-        total_return += (episode_return / time_series_counter)
+        if normalize:
+            total_return += (episode_return / time_series_counter)
+        else:
+            total_return += episode_return
 
     avg_return = total_return / num_iter
     return tf.squeeze(avg_return)

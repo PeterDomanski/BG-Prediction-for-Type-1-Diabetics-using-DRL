@@ -9,7 +9,7 @@ import visualization
 
 @gin.configurable
 def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps,
-                     rl_algorithm, total_time_h, max_train_steps=1000, eval_interval=100):
+                     rl_algorithm, total_time_h, max_attribute_val, max_train_steps=1000, eval_interval=100):
     # replay buffer for data collection
     replay_buffer = get_replay_buffer(agent, batch_size=1)
     # create driver for data collection
