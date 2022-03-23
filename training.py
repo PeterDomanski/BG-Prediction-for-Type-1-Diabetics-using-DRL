@@ -55,27 +55,26 @@ def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_wri
 
     for i in range(max_train_steps + 1):
         if i % eval_interval == 0:
-            # avg_return = evaluation.compute_avg_return(train_env, agent.policy)
+            avg_return = evaluation.compute_avg_return(train_env, agent.policy)
             if setup == "single_step":
-                print()
                 # TODO: evaluate on both training (difficult to get ground truth) and evaluation environment
-                # avg_mae = evaluation.compute_mae_single_step(eval_env, agent.policy)
-                # avg_mse = evaluation.compute_mse_single_step(eval_env, agent.policy)
-                # avg_rmse = evaluation.compute_rmse_single_step(eval_env, agent.policy)
+                avg_mae = evaluation.compute_mae_single_step(eval_env, agent.policy)
+                avg_mse = evaluation.compute_mse_single_step(eval_env, agent.policy)
+                avg_rmse = evaluation.compute_rmse_single_step(eval_env, agent.policy)
                 # visualization of (scalar) attribute of interest
-                # visualization.plot_preds_vs_ground_truth_single_step(log_dir, eval_env, agent, total_time_h,
-                #                                                      max_attribute_val, i)
+                visualization.plot_preds_vs_ground_truth_single_step(log_dir, eval_env, agent, total_time_h,
+                                                                     max_attribute_val, i)
             elif setup == "mutli_step":
                 avg_mae = evaluation.compute_mae_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
                 avg_mse = evaluation.compute_mse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
                 avg_rmse = evaluation.compute_rmse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
             else:
                 logging.info("Setup {} not supported".format(setup))
-            # with file_writer.as_default():
-            #     tf.summary.scalar("Average Return", avg_return, i)
-            #     tf.summary.scalar("Average MAE", avg_mae, i)
-            #     tf.summary.scalar("Average MSE", avg_mse, i)
-            #     tf.summary.scalar("Average RMSE", avg_rmse, i)
+            with file_writer.as_default():
+                tf.summary.scalar("Average Return", avg_return, i)
+                tf.summary.scalar("Average MAE", avg_mae, i)
+                tf.summary.scalar("Average MSE", avg_mse, i)
+                tf.summary.scalar("Average RMSE", avg_rmse, i)
             # keep track of actor network parameters
             with file_writer.as_default():
                 if rl_algorithm == "ppo":
