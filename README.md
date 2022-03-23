@@ -20,8 +20,11 @@ Here is an overview of the proposed methodology:
     - rl_algorithm [str]: specify which RL algorithm to use
         Options: ddpg, td3, reinforce, ppo, sac, dqn
         Note: dqn only for single step; tf_agents only supoort scalar actions 
+        Note: On-policy: reinforce, ppo ; Off-policy: ddpg, td3, sac, dqn
     - max_window_count [int]: specify the maximum number of windows to use per training iteration
         Note: specify -1 if you want to use as much windows as possible with random starting point
+    - env_implementation [str]: sepcify environment implementation to use
+        Options: tf, gym
     - use_gpu [bool]: Specify to explictily use a GPU 
 
 ### Visualization in Tensorboard
@@ -69,6 +72,10 @@ data set can be found in the repository in ./data/RasberryPi.csv
 ### TODO's
 - Continuous or discrete action space -> should prediction, here CGM, be continuous or discrete?
 - Reward function design, e.g., linear reward definition
+- Use replay buffer as dataset
+- Use different replay buffers -> reverb replay buffer (deepmind)
+- Curriculum learning
+- RNN hidden state in environment state -> implement own tf environemnt
 - Hyperparameter tuning
 - More configuration options
 - Visualization of CGM values (multi step scenario)

@@ -25,7 +25,8 @@ def main(args):
 
 
 @gin.configurable
-def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_algorithm="ddpg", use_gpu=False):
+def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_algorithm="ddpg", env_implementation="tf",
+        use_gpu=False):
     # logging
     log_dir = "./logs/" + "log" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     file_writer = tf.summary.create_file_writer(log_dir)
@@ -38,14 +39,23 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
         ts_eval_data = ts_train_data
     # create environment
     if setup == "single_step":
-        train_env = environment.TsForecastingSingleStepEnv(ts_train_data, rl_algorithm=rl_algorithm)
+        if env_implementation == "tf":
+            train_env = environment.TsForecastingSingleStepTFEnv(ts_train_data)
+        else:
+            train_env = environment.TsForecastingSingleStepEnv(ts_train_data, rl_algorithm=rl_algorithm)
         max_attribute_val = train_env.max_attribute_val
         if path_to_eval_data != "":
-            eval_env = environment.TsForecastingSingleStepEnv(ts_eval_data, evaluation=True, rl_algorithm=rl_algorithm,
-                                                              max_window_count=-1)
+            if env_implementation == "tf":
+                eval_env = environment.TsForecastingSingleStepTFEnv(ts_eval_data, evaluation=True, max_window_count=-1)
+            else:
+                eval_env = environment.TsForecastingSingleStepEnv(ts_eval_data, evaluation=True,
+                                                                  rl_algorithm=rl_algorithm, max_window_count=-1)
         else:
-            eval_env = environment.TsForecastingSingleStepEnv(ts_train_data, evaluation=True, rl_algorithm=rl_algorithm,
-                                                              max_window_count=-1)
+            if env_implementation == "tf":
+                eval_env = environment.TsForecastingSingleStepTFEnv(ts_train_data, evaluation=True, max_window_count=-1)
+            else:
+                eval_env = environment.TsForecastingSingleStepEnv(ts_train_data, evaluation=True,
+                                                                  rl_algorithm=rl_algorithm, max_window_count=-1)
         forecasting_steps = 1
     elif setup == "multi_step":
         train_env = environment.TsForecastingMultiStepEnv(ts_train_data)
@@ -54,9 +64,13 @@ def run(path_to_train_data="", path_to_eval_data="", setup="single_step", rl_alg
         else:
             eval_env = environment.TsForecastingMultiStepEnv(ts_train_data, evaluation=True, max_window_count=-1)
         forecasting_steps = eval_env.forecasting_steps
-    # get TF environment
-    tf_train_env = environment.get_tf_environment(train_env)
-    tf_eval_env = environment.get_tf_environment(eval_env)
+    if env_implementation != "tf":
+        # get TF environment
+        tf_train_env = environment.get_tf_environment(train_env)
+        tf_eval_env = environment.get_tf_environment(eval_env)
+    else:
+        tf_train_env = train_env
+        tf_eval_env = eval_env
     # set up RL agent
     agent = rl_agent.get_rl_agent(tf_train_env, rl_algorithm, use_gpu)
     # save gin's operative config to a file before training

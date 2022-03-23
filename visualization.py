@@ -4,7 +4,7 @@ import numpy as np
 import os
 
 
-def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, max_attribute_val, step):
+def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, max_attribute_val, step, prefix="eval"):
     fig, ax = plt.subplots()
     preds, ground_truth = [], []
     time_step = env.reset()
@@ -26,5 +26,5 @@ def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, ma
     plt.ylim([0.0, max_attribute_val + (max_attribute_val / 4)])
     if not os.path.isdir(log_dir + "/visualization"):
         os.makedirs(log_dir + "/visualization")
-    plt.savefig(log_dir + "/visualization/preds_vs_ground_truth_" + str(step) + ".pdf", dpi=300)
+    plt.savefig(log_dir + "/visualization/preds_vs_ground_truth_" + str(step) + "_" + prefix + ".pdf", dpi=300)
     plt.close()
