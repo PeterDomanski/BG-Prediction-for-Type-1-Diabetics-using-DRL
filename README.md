@@ -11,6 +11,7 @@ Here is an overview of the proposed methodology:
     - setup [str]: specify setup (currently single_step and multi_step)
     - max_train_steps [int]: specify max number of training steps
     - eval_interval [int]: specify how often to evaluate
+    - preheat_phase [bool]: (off-policy algorithms) specify to use preheat phase or not
     - window_size [int]: specify length of window (single or multi step)
     - min_attribute_val [float]: specify minimum value of attribute, e.g., CGM
     - max_attribute_val [float]: specify maximum value of attribute, e.g., CGM
@@ -73,7 +74,7 @@ data set can be found in the repository in ./data/RasberryPi.csv
 - Continuous or discrete action space -> should prediction, here CGM, be continuous or discrete?
 - Reward function design, e.g., linear reward definition
 - Use different replay buffers -> reverb replay buffer (deepmind)
-- Own driver implementation as tf.function
+- Driver implementation as tf.function
 - Curriculum learning
 - Hyperparameter tuning
 - More configuration options

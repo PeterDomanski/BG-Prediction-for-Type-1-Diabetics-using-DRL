@@ -4,7 +4,6 @@ from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.drivers import dynamic_step_driver, dynamic_episode_driver
 from tf_agents.policies import random_tf_policy
 from rl import tf_driver
-from tf_agents.trajectories import trajectory
 import tensorflow as tf
 import evaluation
 import visualization
@@ -13,7 +12,7 @@ import visualization
 @gin.configurable
 def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps,
                      rl_algorithm, total_time_h, max_attribute_val, env_implementation, max_train_steps=1000,
-                     eval_interval=100):
+                     eval_interval=100, preheat_phase=False):
     on_policy_algorithms = ["reinforce", "ppo"]
     # replay buffer for data collection
     if rl_algorithm in on_policy_algorithms:
@@ -41,12 +40,14 @@ def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_wri
                                                 driver_type="episode")
 
     if rl_algorithm not in on_policy_algorithms:
-        # pre-training collection of experience with random actor
-        # random_policy = random_tf_policy.RandomTFPolicy(train_env.time_step_spec(), train_env.action_spec())
-        collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128)
-        logging.info("collect a few steps using collect_policy and save to the replay buffer before training")
-        for _ in range(10):
-            collect_driver.collect_step()
+        if preheat_phase:
+            # pre-training collection of experience with initial / random actor
+            # random_policy = random_tf_policy.RandomTFPolicy(train_env.time_step_spec(), train_env.action_spec())
+            # TODO: random policy only possible if we do not use RNN state
+            collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128)
+            logging.info("collect a few steps using collect_policy and save to the replay buffer before training")
+            for _ in range(1000):
+                collect_driver.collect_step()
 
     for i in range(max_train_steps + 1):
         logging.info("start training")

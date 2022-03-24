@@ -39,6 +39,7 @@ class TrainingDriver:
         for _ in range(self.num_iterations):
             self.collect_step()
         experience, _ = next(self.iterator)
+        # TODO: check if dimension expansion is necessary
         experience = tf.nest.map_structure(lambda e: tf.expand_dims(e, 0), experience)
         train_loss = self.agent.train(experience=experience)
         if self.rl_algorithm in ["reinforce", "ppo"]:
