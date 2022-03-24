@@ -16,11 +16,14 @@ def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_wri
                      eval_interval=100):
     on_policy_algorithms = ["reinforce", "ppo"]
     # replay buffer for data collection
-    replay_buffer = get_replay_buffer(agent, batch_size=1)
+    if rl_algorithm in on_policy_algorithms:
+        replay_buffer = get_replay_buffer(agent, batch_size=1, max_buffer_length=2000)
+    else:
+        replay_buffer = get_replay_buffer(agent, batch_size=1, max_buffer_length=10000)
     # create driver for data collection
     if rl_algorithm not in on_policy_algorithms:
         if env_implementation == "tf":
-            collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, batch_size=128)
+            collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128)
         else:
             collect_driver = get_collect_driver(train_env,
                                                 agent.collect_policy,
@@ -29,7 +32,7 @@ def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_wri
                                                 driver_type="step")
     else:
         if env_implementation == "tf":
-            collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, batch_size=128)
+            collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128)
         else:
             collect_driver = get_collect_driver(train_env,
                                                 agent.collect_policy,
@@ -37,7 +40,16 @@ def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_wri
                                                 num_iter=16,
                                                 driver_type="episode")
 
+    if rl_algorithm not in on_policy_algorithms:
+        # pre-training collection of experience with random actor
+        # random_policy = random_tf_policy.RandomTFPolicy(train_env.time_step_spec(), train_env.action_spec())
+        collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128)
+        logging.info("collect a few steps using collect_policy and save to the replay buffer before training")
+        for _ in range(10):
+            collect_driver.collect_step()
+
     for i in range(max_train_steps + 1):
+        logging.info("start training")
         if i % eval_interval == 0:
             avg_return = evaluation.compute_avg_return(train_env, agent.policy)
             with file_writer.as_default():
@@ -90,7 +102,7 @@ def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_wri
 
 
 @gin.configurable
-def get_replay_buffer(agent, batch_size=128, max_buffer_length=32000):
+def get_replay_buffer(agent, batch_size=128, max_buffer_length=2000):
     return tf_uniform_replay_buffer.TFUniformReplayBuffer(data_spec=agent.collect_data_spec,
                                                           batch_size=batch_size,
                                                           max_length=max_buffer_length)

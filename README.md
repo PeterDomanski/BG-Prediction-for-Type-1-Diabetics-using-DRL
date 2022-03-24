@@ -72,10 +72,9 @@ data set can be found in the repository in ./data/RasberryPi.csv
 ### TODO's
 - Continuous or discrete action space -> should prediction, here CGM, be continuous or discrete?
 - Reward function design, e.g., linear reward definition
-- Use replay buffer as dataset
 - Use different replay buffers -> reverb replay buffer (deepmind)
+- Own driver implementation as tf.function
 - Curriculum learning
-- RNN hidden state in environment state -> implement own tf environemnt
 - Hyperparameter tuning
 - More configuration options
 - Visualization of CGM values (multi step scenario)
