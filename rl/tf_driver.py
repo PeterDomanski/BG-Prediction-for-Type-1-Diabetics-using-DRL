@@ -1,39 +1,42 @@
 import tensorflow as tf
-from tf_agents.drivers.dynamic_episode_driver import DynamicEpisodeDriver
-from tf_agents.policies.random_tf_policy import RandomTFPolicy
+from tf_agents.trajectories import trajectory
 from tf_agents.utils import common
 
 
 class TrainingDriver:
-    def __init__(self, agent, environment, replay_buffer, replay_observer, num_iterations):
-        self.train_losses = common.create_variable('train_losses', shape=(num_iterations,), dtype=tf.float32)
-        self.returns = common.create_variable('returns', shape=(num_iterations,), dtype=tf.float32)
-        self.driver = DynamicEpisodeDriver(environment, agent.collect_policy, replay_observer)
-        self.train_env = environment
+    def __init__(self, agent, env, replay_buffer, batch_size=64, num_iterations=10, use_rnn_state=True):
+        env.reset()
+        self.num_iterations = num_iterations
+        self.use_rnn_state = use_rnn_state
+        self.env = env
         self.replay_buffer = replay_buffer
+        self.dataset = self.replay_buffer.as_dataset(sample_batch_size=64, single_deterministic_pass=False)
+        self.iterator = iter(self.dataset)
         agent.train = common.function(agent.train)
         self.agent = agent
         self.step = common.create_variable("step", 0, dtype=tf.int64)
 
-    @tf.function
+    # tf.function
+    def collect_step(self):
+        time_step = self.env.current_time_step()
+        action_step = self.agent.collect_policy.action(time_step)
+        if self.use_rnn_state:
+            next_time_step = self.env.step(action_step.action, policy_state=action_step.state)
+        else:
+            next_time_step = self.env.step(action_step.action)
+        traj = trajectory.from_transition(time_step, action_step, next_time_step)
+        # add trajectory to the replay buffer
+        self.replay_buffer.add_batch(traj)
+
+    # @tf.function
     def train_step(self):
-
-        self.driver.run()
-
-        iterator = iter(self.replay_buffer.as_dataset(single_deterministic_pass=False,
-                                                      sample_batch_size=self.train_env.batch_size,
-                                                      num_steps=self.train_env.episode_length))
-        experience, _ = next(iterator)
-        loss = self.agent.train(experience=experience).loss
-        avg_return = tf.divide(tf.reduce_sum(experience.reward), self.train_env.batch_size)
-        normalized_avg_return = tf.divide(avg_return, tf.cast(self.train_env.episode_length, tf.float32))
-
+        for _ in range(self.num_iterations):
+            self.collect_step()
+        experience, _ = next(self.iterator)
+        # TODO: check why this is necessary
+        experience = tf.nest.map_structure(lambda e: tf.expand_dims(e, 0), experience)
+        train_loss = self.agent.train(experience=experience)
+        # TODO: check if we need to clear replay buffer, especially for offline RL algorithms
         self.replay_buffer.clear()
+        return train_loss
 
-        self.returns[self.step].assign(normalized_avg_return)
-        self.train_losses[self.step].assign(loss)
-        self.step.assign_add(1)
-        return normalized_avg_return, loss
-
-    def get_summary(self):
-        return self.returns[:self.step], self.train_losses[:self.step]

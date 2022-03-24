@@ -1,5 +1,6 @@
 import pandas
 import datetime
+import numpy as np
 
 
 def load_csv_dataset(path_to_data):
@@ -11,4 +12,4 @@ def load_csv_dataset(path_to_data):
     total_time = total_time.seconds
     # total time in hours
     total_time /= 360
-    return pandas_ds.iloc[:, -1], total_time
+    return pandas_ds.iloc[:, -1].astype(np.float32), total_time

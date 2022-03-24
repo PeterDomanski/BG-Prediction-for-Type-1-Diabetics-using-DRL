@@ -20,7 +20,8 @@ LAST = ts.StepType.LAST
 @gin.configurable
 class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
     def __init__(self, ts_data, initial_state_val=100.0, window_size=5, max_window_count=-1, min_attribute_val=35.0,
-                 max_attribute_val=500.0, batch_size=1, evaluation=False, dtype=tf.float32, scope='TFEnviroment'):
+                 max_attribute_val=500.0, batch_size=1, use_rnn_state=True, state_size=2*40,
+                 evaluation=False, dtype=tf.float32, scope='TFEnviroment'):
         self._dtype = dtype
         self._scope = scope
         self._batch_size = batch_size
@@ -30,13 +31,25 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         self.max_window_count = max_window_count
         self.min_attribute_val = min_attribute_val
         self.max_attribute_val = max_attribute_val
-        self._initial_state = tf.cast([initial_state_val] * window_size, dtype=dtype)
-        observation_spec = specs.BoundedTensorSpec((5, ), dtype,
-                                                   # minimum=[min_attribute_val] * window_size,
-                                                   minimum=min_attribute_val,
-                                                   maximum=max_attribute_val,
-                                                   # maximum=[max_attribute_val] * window_size,
-                                                   name='observation')
+        self.use_rnn_state = use_rnn_state
+        if use_rnn_state:
+            self.total_num_features = window_size + state_size
+            self._initial_state = tf.cast([initial_state_val] * self.total_num_features, dtype=dtype)
+            min_obs_values = [min_attribute_val for _ in range(window_size)] + [-np.inf for _ in range(state_size)]
+            max_obs_values = [max_attribute_val for _ in range(window_size)] + [np.inf for _ in range(state_size)]
+            observation_spec = specs.BoundedTensorSpec((self.total_num_features,), dtype,
+                                                       minimum=min_obs_values,
+                                                       maximum=max_obs_values,
+                                                       name='observation')
+
+        else:
+            self._initial_state = tf.cast([initial_state_val] * window_size, dtype=dtype)
+            observation_spec = specs.BoundedTensorSpec((5, ), dtype,
+                                                       # minimum=[min_attribute_val] * window_size,
+                                                       minimum=min_attribute_val,
+                                                       maximum=max_attribute_val,
+                                                       # maximum=[max_attribute_val] * window_size,
+                                                       name='observation')
         action_spec = specs.BoundedTensorSpec(shape=(1, ), dtype=dtype,
                                               minimum=min_attribute_val, maximum=max_attribute_val, name='action')
         reward_spec = specs.BoundedTensorSpec((), dtype, minimum=-465, maximum=0, name='reward')
@@ -52,10 +65,15 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
 
         super(TsForecastingSingleStepTFEnv, self).__init__(time_step_spec, action_spec, batch_size=batch_size)
         self._window_counter = common.create_variable('window_counter', shape=(), dtype=tf.int64)
+        self._ground_truth_size = common.create_variable("ground_truth_size", 1, shape=(), dtype=tf.int32)
         self._current_ground_truth = common.create_variable('current_ground_truth', shape=(), dtype=dtype)
         self._current_data_pos = common.create_variable('current_data_pos', shape=(), dtype=dtype)
-        self._state = common.create_variable('state', initial_state_val, shape=(window_size, ),
-                                             dtype=dtype)
+        if use_rnn_state:
+            self._state = common.create_variable('state', initial_state_val, shape=(self.total_num_features, ),
+                                                 dtype=dtype)
+        else:
+            self._state = common.create_variable('state', initial_state_val, shape=(window_size, ),
+                                                 dtype=dtype)
         self._reward = common.create_variable('reward', 0, dtype=dtype)
         self._steps = common.create_variable('steps', 0)
         self._resets = common.create_variable('resets', 0)
@@ -78,7 +96,7 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         else:
             step_type = tf.case(
                 [(tf.equal(self._steps, 0), first),
-                 (tf.equal(self._steps, len(self.ts_data) - 1), last)],
+                 (tf.equal(self._steps, int(len(self.ts_data) / (self.window_size + 1) - 1)), last)],
                 default=mid)
 
         # no discounts
@@ -90,45 +108,82 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
                            tf.expand_dims(self._state, 0))
         # return ts.TimeStep(step_type, self._reward, discount, self._state)
 
+    def reset(self):
+        return self._reset()
+
     def _reset(self):
         self._window_counter.assign(0)
-        self._steps.assign(0)
         self._resets.assign_add(1)
         if self.evaluation:
             self._current_data_pos.assign(0)
+            pos = 0
         else:
             # random value for staring position
             pos = np.random.randint(low=0, high=len(self.ts_data) - (2 * self.window_size + 1))
             self._current_data_pos.assign(pos)
-        pos = int(tf.squeeze(self._current_data_pos))
-        self._state.assign(self.ts_data[pos:pos + self.window_size].values)
+            pos = int(tf.squeeze(self._current_data_pos))
+
+        if self.use_rnn_state:
+            data_values = self.ts_data[pos:pos + self.window_size].values
+            rnn_state = tf.zeros(shape=(self.total_num_features - self.window_size, ), dtype=self._dtype)
+            total_state = tf.concat([data_values, rnn_state], axis=-1)
+            self._state.assign(total_state)
+        else:
+            self._state.assign(self.ts_data[pos:pos + self.window_size].values)
+            # self._state.assign(tf.slice(
+            #     self.ts_data,
+            #     tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
+            #     tf.cast(tf.expand_dims(self.window_size, 0), tf.int32)
+            # ))
         self._current_data_pos.assign_add(self.window_size)
         self._current_ground_truth.assign(self.ts_data[int(tf.squeeze(self._current_data_pos))])
+        # self._current_ground_truth.assign(
+        #     tf.squeeze(
+        #         tf.slice(self.ts_data,
+        #                  tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
+        #                  tf.expand_dims(self._ground_truth_size, 0)
+        #                  )))
         self._current_data_pos.assign_add(1)
         self._window_counter.assign_add(1)
-        return self.current_time_step()
+        time_step = self.current_time_step()
+        self._steps.assign(0)
+        return time_step
 
     def step(self, action, policy_state=None):
         return self._step(action, policy_state=policy_state)
 
     # policy state is state of RNN (actor network)
     def _step(self, action, policy_state=None):
+        self._steps.assign_add(1)
         if self.evaluation:
             self._reward.assign(self._current_ground_truth)
         else:
             self._reward.assign(tf.squeeze(-1 * tf.math.abs(action - self._current_ground_truth)))
-        self._steps.assign_add(1)
         pos = int(tf.squeeze(self._current_data_pos))
-        self._state.assign(self.ts_data[pos:pos + self.window_size].values)
+        if self.use_rnn_state:
+            data_values = self.ts_data[pos:pos + self.window_size].values
+            rnn_state = tf.squeeze(tf.concat(policy_state, axis=-1))
+            total_state = tf.concat([data_values, rnn_state], axis=-1)
+            self._state.assign(total_state)
+        else:
+            self._state.assign(self.ts_data[pos:pos + self.window_size].values)
+        # self._state.assign(tf.slice(self.ts_data,
+        #                             tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
+        #                             tf.cast(tf.expand_dims(self.window_size, 0), tf.int32)))
         self._current_data_pos.assign_add(self.window_size)
         self._current_ground_truth.assign(self.ts_data[int(tf.squeeze(self._current_data_pos))])
+        # self._current_ground_truth.assign(
+        #     tf.squeeze(
+        #         tf.slice(self.ts_data,
+        #                  tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
+        #                  tf.expand_dims(self._ground_truth_size, 0)
+        #                  )))
         self._current_data_pos.assign_add(1)
         self._window_counter.assign_add(1)
         if self._current_data_pos + self.window_size < len(self.ts_data):
             if self.max_window_count != -1:
                 if self._window_counter >= self.max_window_count:
                     return self._reset()
-            # self._build_observation()
             return self.current_time_step()
         else:
             return self._reset()

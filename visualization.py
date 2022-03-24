@@ -4,7 +4,8 @@ import numpy as np
 import os
 
 
-def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, max_attribute_val, step, prefix="eval"):
+def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, max_attribute_val, step, prefix="eval",
+                                           use_rnn_state=True):
     fig, ax = plt.subplots()
     preds, ground_truth = [], []
     time_step = env.reset()
@@ -12,7 +13,10 @@ def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, ma
 
     while not time_step.is_last():
         action_step, rnn_state, _ = agent.policy.action(time_step, rnn_state)
-        time_step = env.step(action_step)
+        if use_rnn_state:
+            time_step = env.step(action_step, rnn_state)
+        else:
+            time_step = env.step(action_step)
         preds.append(tf.squeeze(action_step))
         ground_truth.append(time_step.reward)
 
