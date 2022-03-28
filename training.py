@@ -10,9 +10,11 @@ import visualization
 
 
 @gin.configurable
-def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_writer, setup, forecasting_steps,
-                     rl_algorithm, total_time_h, max_attribute_val, env_implementation, max_train_steps=1000,
-                     eval_interval=100, preheat_phase=False):
+def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_train, agent, ts_eval_data, file_writer,
+                     setup, forecasting_steps, rl_algorithm, total_train_time_h, total_eval_time_h, max_attribute_val,
+                     env_implementation, max_train_steps=1000, eval_interval=100, preheat_phase=False):
+    # train_env_eval (train env with ground truth as reward) and
+    # eval_env_train (eval env with standard reward definition) are for validation purposes
     on_policy_algorithms = ["reinforce", "ppo"]
     # replay buffer for data collection
     if rl_algorithm in on_policy_algorithms:
@@ -50,30 +52,50 @@ def rl_training_loop(log_dir, train_env, eval_env, agent, ts_eval_data, file_wri
                 collect_driver.collect_step()
 
     for i in range(max_train_steps + 1):
-        logging.info("start training")
+        logging.info("start training iteration {}".format(i))
         if i % eval_interval == 0:
-            avg_return = evaluation.compute_avg_return(train_env, agent.policy)
+            # compute average return on train data
+            avg_return_train = evaluation.compute_avg_return(train_env, agent.policy)
+            # compute average return on eval data
+            avg_return_eval = evaluation.compute_avg_return(eval_env_train, agent.policy)
             with file_writer.as_default():
-                tf.summary.scalar("Average Return", avg_return, i)
+                tf.summary.scalar("Average Return (Training)", avg_return_train, i)
+                tf.summary.scalar("Average Return (Evaluation)", avg_return_eval, i)
             if setup == "single_step":
-                # TODO: evaluate on both training (difficult to get ground truth) and evaluation environment
-                # avg_mae = evaluation.compute_mae_single_step(eval_env, agent.policy)
-                # avg_mse = evaluation.compute_mse_single_step(eval_env, agent.policy)
-                # avg_rmse = evaluation.compute_rmse_single_step(eval_env, agent.policy)
-                avg_mae, avg_mse, avg_rmse = evaluation.compute_metrics_single_step(eval_env, agent.policy)
-                # visualization of (scalar) attribute of interest
-                visualization.plot_preds_vs_ground_truth_single_step(log_dir, eval_env, agent, total_time_h,
-                                                                     max_attribute_val, i)
+                # evaluation on train data set
+                avg_mae_train, avg_mse_train, avg_rmse_train = evaluation.compute_metrics_single_step(train_env_eval,
+                                                                                                      agent.policy)
+                # visualization of (scalar) attribute of interest on train data set
+                visualization.plot_preds_vs_ground_truth_single_step(log_dir, train_env_eval, agent, total_train_time_h,
+                                                                     max_attribute_val, i, prefix="train")
+                # evaluation on eval data set
+                avg_mae_eval, avg_mse_eval, avg_rmse_eval = evaluation.compute_metrics_single_step(eval_env,
+                                                                                                   agent.policy)
+                # visualization of (scalar) attribute of interest on eval data set
+                visualization.plot_preds_vs_ground_truth_single_step(log_dir, eval_env, agent, total_eval_time_h,
+                                                                     max_attribute_val, i, prefix="eval")
             elif setup == "mutli_step":
-                avg_mae = evaluation.compute_mae_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
-                avg_mse = evaluation.compute_mse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
-                avg_rmse = evaluation.compute_rmse_multi_step(eval_env, agent.policy, ts_eval_data, forecasting_steps)
+                avg_mae_train = evaluation.compute_mae_multi_step(train_env_eval, agent.policy, ts_eval_data,
+                                                                  forecasting_steps)
+                avg_mse_train = evaluation.compute_mse_multi_step(train_env_eval, agent.policy, ts_eval_data,
+                                                                  forecasting_steps)
+                avg_rmse_train = evaluation.compute_rmse_multi_step(train_env_eval, agent.policy, ts_eval_data,
+                                                                    forecasting_steps)
+                avg_mae_eval = evaluation.compute_mae_multi_step(eval_env, agent.policy, ts_eval_data,
+                                                                 forecasting_steps)
+                avg_mse_eval = evaluation.compute_mse_multi_step(eval_env, agent.policy, ts_eval_data,
+                                                                 forecasting_steps)
+                avg_rmse_eval = evaluation.compute_rmse_multi_step(eval_env, agent.policy, ts_eval_data,
+                                                                   forecasting_steps)
             else:
                 logging.info("Setup {} not supported".format(setup))
             with file_writer.as_default():
-                tf.summary.scalar("Average MAE", avg_mae, i)
-                tf.summary.scalar("Average MSE", avg_mse, i)
-                tf.summary.scalar("Average RMSE", avg_rmse, i)
+                tf.summary.scalar("Average MAE (Training)", avg_mae_train, i)
+                tf.summary.scalar("Average MSE (Training)", avg_mse_train, i)
+                tf.summary.scalar("Average RMSE (Training)", avg_rmse_train, i)
+                tf.summary.scalar("Average MAE (Evaluation)", avg_mae_eval, i)
+                tf.summary.scalar("Average MSE (Evaluation)", avg_mse_eval, i)
+                tf.summary.scalar("Average RMSE (Evaluation)", avg_rmse_eval, i)
             # keep track of actor network parameters
             with file_writer.as_default():
                 if rl_algorithm == "ppo":

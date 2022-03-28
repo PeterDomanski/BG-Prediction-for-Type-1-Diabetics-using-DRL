@@ -34,7 +34,7 @@ class TrainingDriver:
         # add trajectory to the replay buffer
         self.replay_buffer.add_batch(traj)
 
-    # @tf.function
+    # TODO: use @tf.function
     def train_step(self):
         for _ in range(self.num_iterations):
             self.collect_step()

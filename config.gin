@@ -11,7 +11,7 @@ run.use_gpu = False
 
 rl_training_loop.max_train_steps = 2500
 rl_training_loop.eval_interval = 50
-rl_trainin_loop.preheat_phase = False
+rl_training_loop.preheat_phase = False
 
 # ----------------------------------------------------------------------------------------------------------------------
 # single step forecasting
