@@ -1,7 +1,8 @@
 import tensorflow as tf
+from data import dataset
 
 
-def compute_avg_return(env, policy, num_iter=16, normalize=False, use_rnn_state=True):
+def compute_avg_return(env, policy, data_summary, num_iter=16, normalize=False, use_rnn_state=True):
     total_return = 0.0
     for _ in range(num_iter):
         time_step = env.reset()
@@ -15,7 +16,10 @@ def compute_avg_return(env, policy, num_iter=16, normalize=False, use_rnn_state=
                 time_step = env.step(action_step, rnn_state)
             else:
                 time_step = env.step(action_step)
-            episode_return += time_step.reward
+            if len(data_summary) == 0:
+                episode_return += time_step.reward
+            else:
+                episode_return += dataset.undo_data_normalization_sample_wise(time_step.reward, data_summary)
             time_series_counter += 1
 
         if normalize:
@@ -27,7 +31,7 @@ def compute_avg_return(env, policy, num_iter=16, normalize=False, use_rnn_state=
     return tf.squeeze(avg_return)
 
 
-def compute_metrics_single_step(env, policy, metrics=['mae', 'mse', 'rmse'], num_iter=1, use_rnn_state=True):
+def compute_metrics_single_step(env, policy, data_summary, metrics=['mae', 'mse', 'rmse'], num_iter=1, use_rnn_state=True):
     if 'mae' in metrics:
         total_mae = 0.0
     if 'mse' in metrics:
@@ -53,8 +57,12 @@ def compute_metrics_single_step(env, policy, metrics=['mae', 'mse', 'rmse'], num
             else:
                 time_step = env.step(action_step)
             # agent forecast
-            agent_pred = tf.squeeze(action_step)
-            ground_truth = time_step.reward
+            if len(data_summary) == 0:
+                agent_pred = tf.squeeze(action_step)
+                ground_truth = time_step.reward
+            else:
+                agent_pred = dataset.undo_data_normalization_sample_wise(tf.squeeze(action_step), data_summary)
+                ground_truth = dataset.undo_data_normalization_sample_wise(time_step.reward, data_summary)
             if 'mae' in metrics:
                 episode_mae += tf.math.abs(agent_pred - ground_truth)
             if 'mse' in metrics:

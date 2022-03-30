@@ -12,7 +12,7 @@ import visualization
 @gin.configurable
 def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_train, agent, ts_eval_data, file_writer,
                      setup, forecasting_steps, rl_algorithm, total_train_time_h, total_eval_time_h, max_attribute_val,
-                     env_implementation, max_train_steps=1000, eval_interval=100, preheat_phase=False):
+                     data_summary, env_implementation, max_train_steps=1000, eval_interval=100, preheat_phase=False):
     # train_env_eval (train env with ground truth as reward) and
     # eval_env_train (eval env with standard reward definition) are for validation purposes
     on_policy_algorithms = ["reinforce", "ppo"]
@@ -55,25 +55,26 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
         logging.info("start training iteration {}".format(i))
         if i % eval_interval == 0:
             # compute average return on train data
-            avg_return_train = evaluation.compute_avg_return(train_env, agent.policy)
+            avg_return_train = evaluation.compute_avg_return(train_env, agent.policy, data_summary)
             # compute average return on eval data
-            avg_return_eval = evaluation.compute_avg_return(eval_env_train, agent.policy)
+            avg_return_eval = evaluation.compute_avg_return(eval_env_train, agent.policy, data_summary)
             with file_writer.as_default():
                 tf.summary.scalar("Average Return (Training)", avg_return_train, i)
                 tf.summary.scalar("Average Return (Evaluation)", avg_return_eval, i)
             if setup == "single_step":
                 # evaluation on train data set
-                avg_mae_train, avg_mse_train, avg_rmse_train = evaluation.compute_metrics_single_step(train_env_eval,
-                                                                                                      agent.policy)
+                avg_mae_train, avg_mse_train, avg_rmse_train = evaluation.compute_metrics_single_step(
+                    train_env_eval, agent.policy, data_summary)
                 # visualization of (scalar) attribute of interest on train data set
-                visualization.plot_preds_vs_ground_truth_single_step(log_dir, train_env_eval, agent, total_train_time_h,
-                                                                     max_attribute_val, i, prefix="train")
+                visualization.plot_preds_vs_ground_truth_single_step(
+                    log_dir, train_env_eval, agent, total_train_time_h, max_attribute_val, i, data_summary,
+                    prefix="train")
                 # evaluation on eval data set
-                avg_mae_eval, avg_mse_eval, avg_rmse_eval = evaluation.compute_metrics_single_step(eval_env,
-                                                                                                   agent.policy)
+                avg_mae_eval, avg_mse_eval, avg_rmse_eval = evaluation.compute_metrics_single_step(
+                    eval_env, agent.policy, data_summary)
                 # visualization of (scalar) attribute of interest on eval data set
-                visualization.plot_preds_vs_ground_truth_single_step(log_dir, eval_env, agent, total_eval_time_h,
-                                                                     max_attribute_val, i, prefix="eval")
+                visualization.plot_preds_vs_ground_truth_single_step(
+                    log_dir, eval_env, agent, total_eval_time_h, max_attribute_val, i, data_summary, prefix="eval")
             elif setup == "mutli_step":
                 avg_mae_train = evaluation.compute_mae_multi_step(train_env_eval, agent.policy, ts_eval_data,
                                                                   forecasting_steps)

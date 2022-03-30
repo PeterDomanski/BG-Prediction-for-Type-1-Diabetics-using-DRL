@@ -2,10 +2,11 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from data import dataset
 
 
-def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, max_attribute_val, step, prefix="eval",
-                                           use_rnn_state=True):
+def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, max_attribute_val, step, data_summary,
+                                           prefix="eval", use_rnn_state=True):
     fig, ax = plt.subplots()
     preds, ground_truth = [], []
     time_step = env.reset()
@@ -17,9 +18,12 @@ def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, ma
             time_step = env.step(action_step, rnn_state)
         else:
             time_step = env.step(action_step)
-        preds.append(tf.squeeze(action_step))
-        ground_truth.append(time_step.reward)
-
+        if len(data_summary) == 0:
+            preds.append(tf.squeeze(action_step))
+            ground_truth.append(time_step.reward)
+        else:
+            preds.append(dataset.undo_data_normalization_sample_wise(tf.squeeze(action_step), data_summary))
+            ground_truth.append(dataset.undo_data_normalization_sample_wise(time_step.reward, data_summary))
     x_values = np.linspace(start=0, stop=total_time_h, num=len(preds))
     ax.plot(x_values, ground_truth, color='green', label="ground_truth")
     ax.plot(x_values, preds, color='blue', label="rl_prediction")
