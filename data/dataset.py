@@ -12,7 +12,6 @@ def load_csv_dataset(path_to_data):
     total_time = total_time.seconds
     # total time in hours
     total_time /= 3600
-    # TODO: data preprocessing, e.g. 0/1 normalization -> return min and max CGM values
     # TODO: error in total time calculation
     return pandas_ds.iloc[:, -1].astype(np.float32), total_time
 

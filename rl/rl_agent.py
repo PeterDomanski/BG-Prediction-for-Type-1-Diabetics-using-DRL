@@ -23,7 +23,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
         with strategy.scope():
             actor_net = actor_rnn_network.ActorRnnNetwork(observation_spec, action_spec)
             critic_net = critic_rnn_network.CriticRnnNetwork((observation_spec, action_spec),
-                                                             lstm_size=(40, ))
+                                                             lstm_size=(64, ))
             train_step = train_utils.create_train_step()
 
         agent = ddpg_agent.DdpgAgent(
@@ -41,7 +41,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
         with strategy.scope():
             critic_net = critic_rnn_network.CriticRnnNetwork(
                 (observation_spec, action_spec),
-                lstm_size=(40,),
+                lstm_size=(64,),
                 observation_fc_layer_params=None,
                 action_fc_layer_params=None,
                 joint_fc_layer_params=(256, 256),
@@ -51,7 +51,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             actor_net = tf_agents.networks.actor_distribution_rnn_network.ActorDistributionRnnNetwork(
                 observation_spec,
                 action_spec,
-                lstm_size=(40,),
+                lstm_size=(64,),
                 input_fc_layer_params=(256, 256),
                 output_fc_layer_params=(256, 256),
                 continuous_projection_net=tanh_normal_projection_network.TanhNormalProjectionNetwork
@@ -66,9 +66,9 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             actor_optimizer=tf.keras.optimizers.Adam(),
             critic_optimizer=tf.keras.optimizers.Adam(),
             alpha_optimizer=tf.keras.optimizers.Adam(),
-            target_update_period=1,
+            target_update_period=100,
             target_update_tau=0.005,
-            gamma=0.99,
+            gamma=1.0,
             reward_scale_factor=1.0,
             train_step_counter=train_step
         )
@@ -78,7 +78,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             actor_net = tf_agents.networks.actor_distribution_rnn_network.ActorDistributionRnnNetwork(
                 observation_spec,
                 action_spec,
-                lstm_size=(40,)
+                lstm_size=(64,)
             )
             value_net = value_rnn_network.ValueRnnNetwork(
                 observation_spec,
@@ -98,7 +98,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             q_net = q_rnn_network.QRnnNetwork(
                 observation_spec,
                 action_spec,
-                lstm_size=(40,)
+                lstm_size=(64,)
             )
             train_step = train_utils.create_train_step()
         agent = dqn_agent.DqnAgent(
@@ -113,7 +113,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
         with strategy.scope():
             actor_net = actor_rnn_network.ActorRnnNetwork(observation_spec, action_spec)
             critic_net = critic_rnn_network.CriticRnnNetwork((observation_spec, action_spec),
-                                                             lstm_size=(40,))
+                                                             lstm_size=(64,))
             train_step = train_utils.create_train_step()
 
         agent = td3_agent.Td3Agent(
@@ -133,7 +133,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             actor_net = actor_distribution_rnn_network.ActorDistributionRnnNetwork(
                 observation_spec,
                 action_spec,
-                lstm_size=(40,))
+                lstm_size=(64,))
             value_net = value_rnn_network.ValueRnnNetwork(observation_spec)
             train_step = train_utils.create_train_step()
 

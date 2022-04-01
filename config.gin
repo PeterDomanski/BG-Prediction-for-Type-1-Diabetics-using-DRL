@@ -8,7 +8,7 @@ run.normalization = True
 # min_max, mean, z_score
 run.normalization_type = "min_max"
 run.setup = "single_step"
-run.rl_algorithm = "sac"
+run.rl_algorithm = "ppo"
 run.env_implementation = "tf"
 run.use_gpu = False
 

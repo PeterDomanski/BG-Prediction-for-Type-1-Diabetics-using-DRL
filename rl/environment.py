@@ -20,7 +20,7 @@ LAST = ts.StepType.LAST
 @gin.configurable
 class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
     def __init__(self, ts_data, initial_state_val=100.0, window_size=5, max_window_count=-1, min_attribute_val=35.0,
-                 max_attribute_val=500.0, batch_size=1, use_rnn_state=True, state_size=2*40,
+                 max_attribute_val=500.0, batch_size=1, use_rnn_state=True, state_size=2*64, use_pred_diff=True,
                  evaluation=False, dtype=tf.float32, scope='TFEnviroment'):
         self._dtype = dtype
         self._scope = scope
@@ -32,6 +32,8 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         self.min_attribute_val = min_attribute_val
         self.max_attribute_val = max_attribute_val
         self.use_rnn_state = use_rnn_state
+        # TODO: include difference of prediction and ground truth in state (-> observation space)
+        self.use_pred_diif = use_pred_diff
         if use_rnn_state:
             self.total_num_features = window_size + state_size
             self._initial_state = tf.cast([initial_state_val] * self.total_num_features, dtype=dtype)
@@ -162,6 +164,8 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         pos = int(tf.squeeze(self._current_data_pos))
         if self.use_rnn_state:
             data_values = self.ts_data[pos:pos + self.window_size].values
+            if type(policy_state) is dict:
+                policy_state = policy_state['actor_network_state']
             rnn_state = tf.squeeze(tf.concat(policy_state, axis=-1))
             total_state = tf.concat([data_values, rnn_state], axis=-1)
             self._state.assign(total_state)

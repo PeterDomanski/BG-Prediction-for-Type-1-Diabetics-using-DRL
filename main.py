@@ -43,6 +43,7 @@ def run(path_to_train_data="", path_to_eval_data="", normalization=False, normal
     else:
         data_summary = {}
     # create environment
+    # TODO: automatically set min/max_attribute_val dependent on given normalization type
     if setup == "single_step":
         if env_implementation == "tf":
             train_env = environment.TsForecastingSingleStepTFEnv(ts_train_data)
