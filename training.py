@@ -12,11 +12,13 @@ import visualization
 @gin.configurable
 def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_train, agent, ts_eval_data, file_writer,
                      setup, forecasting_steps, rl_algorithm, total_train_time_h, total_eval_time_h, max_attribute_val,
-                     data_summary, env_implementation, max_train_steps=1000, eval_interval=100, preheat_phase=False):
+                     num_iter, data_summary, env_implementation, max_train_steps=1000, eval_interval=100,
+                     preheat_phase=False):
     # train_env_eval (train env with ground truth as reward) and
     # eval_env_train (eval env with standard reward definition) are for validation purposes
     on_policy_algorithms = ["reinforce", "ppo"]
     # replay buffer for data collection
+    # TODO: reverb replay buffer
     if rl_algorithm in on_policy_algorithms:
         replay_buffer = get_replay_buffer(agent, batch_size=1, max_buffer_length=2000)
     else:
@@ -33,7 +35,10 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
                                                 driver_type="step")
     else:
         if env_implementation == "tf":
-            collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128)
+            # num iter has to be the length of an episode for on-policy algorithms
+            # TODO: on-policy algorithm need episode driver
+            collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128,
+                                                      num_iterations=num_iter)
         else:
             collect_driver = get_collect_driver(train_env,
                                                 agent.collect_policy,
@@ -47,47 +52,47 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
             # random_policy = random_tf_policy.RandomTFPolicy(train_env.time_step_spec(), train_env.action_spec())
             # TODO: random policy only possible if we do not use RNN state
             collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128)
-            logging.info("collect a few steps using collect_policy and save to the replay buffer before training")
+            logging.info("Collect a few steps using collect_policy and save to the replay buffer before training")
             for _ in range(1000):
                 collect_driver.collect_step()
 
     for i in range(max_train_steps + 1):
-        logging.info("start training iteration {}".format(i))
+        logging.info("Start training iteration {}".format(i))
         if i % eval_interval == 0:
             # compute average return on train data
-            avg_return_train = evaluation.compute_avg_return(train_env, agent.policy, data_summary)
+            avg_return_train = evaluation.compute_avg_return(train_env, agent.policy, env_implementation, data_summary)
             # compute average return on eval data
-            avg_return_eval = evaluation.compute_avg_return(eval_env_train, agent.policy, data_summary)
+            avg_return_eval = evaluation.compute_avg_return(eval_env_train, agent.policy, env_implementation,
+                                                            data_summary)
             with file_writer.as_default():
                 tf.summary.scalar("Average Return (Training)", avg_return_train, i)
                 tf.summary.scalar("Average Return (Evaluation)", avg_return_eval, i)
             if setup == "single_step":
                 # evaluation on train data set
                 avg_mae_train, avg_mse_train, avg_rmse_train = evaluation.compute_metrics_single_step(
-                    train_env_eval, agent.policy, data_summary)
+                    train_env_eval, agent.policy, env_implementation, data_summary)
                 # visualization of (scalar) attribute of interest on train data set
                 visualization.plot_preds_vs_ground_truth_single_step(
-                    log_dir, train_env_eval, agent, total_train_time_h, max_attribute_val, i, data_summary,
-                    prefix="train")
+                    log_dir, train_env_eval, agent, total_train_time_h, max_attribute_val, i, env_implementation,
+                    data_summary, prefix="train")
                 # evaluation on eval data set
                 avg_mae_eval, avg_mse_eval, avg_rmse_eval = evaluation.compute_metrics_single_step(
-                    eval_env, agent.policy, data_summary)
+                    eval_env, agent.policy, env_implementation, data_summary)
                 # visualization of (scalar) attribute of interest on eval data set
                 visualization.plot_preds_vs_ground_truth_single_step(
-                    log_dir, eval_env, agent, total_eval_time_h, max_attribute_val, i, data_summary, prefix="eval")
-            elif setup == "mutli_step":
-                avg_mae_train = evaluation.compute_mae_multi_step(train_env_eval, agent.policy, ts_eval_data,
-                                                                  forecasting_steps)
-                avg_mse_train = evaluation.compute_mse_multi_step(train_env_eval, agent.policy, ts_eval_data,
-                                                                  forecasting_steps)
-                avg_rmse_train = evaluation.compute_rmse_multi_step(train_env_eval, agent.policy, ts_eval_data,
-                                                                    forecasting_steps)
-                avg_mae_eval = evaluation.compute_mae_multi_step(eval_env, agent.policy, ts_eval_data,
-                                                                 forecasting_steps)
-                avg_mse_eval = evaluation.compute_mse_multi_step(eval_env, agent.policy, ts_eval_data,
-                                                                 forecasting_steps)
-                avg_rmse_eval = evaluation.compute_rmse_multi_step(eval_env, agent.policy, ts_eval_data,
-                                                                   forecasting_steps)
+                    log_dir, eval_env, agent, total_eval_time_h, max_attribute_val, i, env_implementation,
+                    data_summary, prefix="eval")
+            elif setup == "multi_step":
+                avg_mae_train, avg_mse_train, avg_rmse_train = evaluation.compute_metrics_multi_step(
+                    train_env_eval, agent.policy, env_implementation, data_summary, ts_eval_data, forecasting_steps)
+                visualization.plot_preds_vs_ground_truth_multi_step(
+                    log_dir, train_env_eval, agent, total_train_time_h, max_attribute_val, i, env_implementation,
+                    data_summary, ts_eval_data, forecasting_steps, prefix="train")
+                avg_mae_eval, avg_mse_eval, avg_rmse_eval = evaluation.compute_metrics_multi_step(
+                    eval_env, agent.policy, env_implementation, data_summary, ts_eval_data, forecasting_steps)
+                visualization.plot_preds_vs_ground_truth_multi_step(
+                    log_dir, train_env_eval, agent, total_train_time_h, max_attribute_val, i, env_implementation,
+                    data_summary, ts_eval_data, forecasting_steps, prefix="eval")
             else:
                 logging.info("Setup {} not supported".format(setup))
             with file_writer.as_default():

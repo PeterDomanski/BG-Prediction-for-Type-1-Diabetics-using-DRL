@@ -3,12 +3,13 @@
 run.path_to_train_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-training.csv"
 # if path to eval data empty only training data is used
 # Ohio data: /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing.csv
+# /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing_100.csv
 run.path_to_eval_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing_100.csv"
 run.normalization = True
 # min_max, mean, z_score
-run.normalization_type = "min_max"
+run.normalization_type = "z_score"
 run.setup = "single_step"
-run.rl_algorithm = "ppo"
+run.rl_algorithm = "sac"
 run.env_implementation = "tf"
 run.use_gpu = False
 
@@ -31,8 +32,8 @@ TsForecastingSingleStepEnv.max_window_count = 16
 # tensorflow environment implementation
 TsForecastingSingleStepTFEnv.window_size = 5
 # default: min=35.0, max=500.0
-TsForecastingSingleStepTFEnv.min_attribute_val = 0.0
-TsForecastingSingleStepTFEnv.max_attribute_val = 1.0
+TsForecastingSingleStepTFEnv.min_attribute_val = 35.0
+TsForecastingSingleStepTFEnv.max_attribute_val = 500.0
 TsForecastingSingleStepTFEnv.max_window_count = 16
 TsForecastingSingleStepTFEnv.batch_size = 1
 # ----------------------------------------------------------------------------------------------------------------------
@@ -46,6 +47,15 @@ TsForecastingMultiStepEnv.max_attribute_val = 5.0
 TsForecastingMultiStepEnv.reward_def = "linear"
 # specify max number of windows per RL iteration; -1 to use as much as possible with random starting point
 TsForecastingMultiStepEnv.max_window_count = 100
+
+# tensorflow environment implementation
+TsForecastingMultiStepTFEnv.window_size = 6
+TsForecastingMultiStepTFEnv.pred_horizon = 6
+# default: min=35.0, max=500.0
+TsForecastingMultiStepTFEnv.min_attribute_val = 35.0
+TsForecastingMultiStepTFEnv.max_attribute_val = 500.0
+TsForecastingMultiStepTFEnv.max_window_count = 16
+TsForecastingMultiStepTFEnv.batch_size = 1
 
 
 

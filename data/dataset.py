@@ -7,12 +7,16 @@ def load_csv_dataset(path_to_data):
     pandas_ds = pandas.read_csv(path_to_data)
     # only keep data attribute of interest, e.g., CGM or execution time (we assume that attribute in last column)
     date_format_str = '%d-%m-%Y %H:%M:%S'
-    total_time = datetime.datetime.strptime(pandas_ds["_ts"].iloc[-1], date_format_str) - datetime.datetime.strptime(
-        pandas_ds["_ts"].iloc[0], date_format_str)
-    total_time = total_time.seconds
-    # total time in hours
-    total_time /= 3600
-    # TODO: error in total time calculation
+    # total_time = datetime.datetime.strptime(pandas_ds["_ts"].iloc[-1], date_format_str) - datetime.datetime.strptime(
+    #     pandas_ds["_ts"].iloc[0], date_format_str)
+    if "RasberryPi" in path_to_data:
+        total_time = (35.09 / 60)
+    else:
+        # total_time = datetime.datetime.strptime(pandas_ds.iloc[0, -1], date_format_str) - datetime.datetime.strptime(
+        #     pandas_ds.iloc[0, 0], date_format_str)
+        total_time = datetime.datetime.strptime(pandas_ds["_ts"].iloc[-1], date_format_str) - \
+                     datetime.datetime.strptime(pandas_ds["_ts"].iloc[0], date_format_str)
+        total_time = np.round((total_time.days * 24) + (total_time.seconds / 3600))
     return pandas_ds.iloc[:, -1].astype(np.float32), total_time
 
 
