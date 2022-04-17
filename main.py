@@ -133,8 +133,9 @@ def run(path_to_train_data="", path_to_eval_data="", normalization=False, normal
     config_txt_file.close()
     # train agent on environment
     training.rl_training_loop(log_dir, tf_train_env, tf_train_env_eval, tf_eval_env, tf_eval_env_train, agent,
-                              ts_eval_data, file_writer, setup, forecasting_steps, rl_algorithm, total_train_time_h,
-                              total_eval_time_h, max_attribute_val, num_iter, data_summary, env_implementation)
+                              ts_train_data, ts_eval_data, file_writer, setup, forecasting_steps, rl_algorithm,
+                              total_train_time_h, total_eval_time_h, max_attribute_val, num_iter, data_summary,
+                              env_implementation)
     # save gin's operative config to a file after training
     config_txt_file = open(log_dir + "/gin_config.txt", "a")
     config_txt_file.write("\n")

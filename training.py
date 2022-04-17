@@ -10,10 +10,10 @@ import visualization
 
 
 @gin.configurable
-def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_train, agent, ts_eval_data, file_writer,
-                     setup, forecasting_steps, rl_algorithm, total_train_time_h, total_eval_time_h, max_attribute_val,
-                     num_iter, data_summary, env_implementation, max_train_steps=1000, eval_interval=100,
-                     preheat_phase=False):
+def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_train, agent, ts_train_data, ts_eval_data,
+                     file_writer, setup, forecasting_steps, rl_algorithm, total_train_time_h, total_eval_time_h,
+                     max_attribute_val, num_iter, data_summary, env_implementation, max_train_steps=1000,
+                     eval_interval=100, preheat_phase=False):
     # train_env_eval (train env with ground truth as reward) and
     # eval_env_train (eval env with standard reward definition) are for validation purposes
     on_policy_algorithms = ["reinforce", "ppo"]
@@ -63,7 +63,7 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
             avg_return_train = evaluation.compute_avg_return(train_env, agent.policy, env_implementation, data_summary)
             # compute average return on eval data
             avg_return_eval = evaluation.compute_avg_return(eval_env_train, agent.policy, env_implementation,
-                                                            data_summary)
+                                                            data_summary, num_iter=1)
             with file_writer.as_default():
                 tf.summary.scalar("Average Return (Training)", avg_return_train, i)
                 tf.summary.scalar("Average Return (Evaluation)", avg_return_eval, i)
@@ -84,14 +84,14 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
                     data_summary, prefix="eval")
             elif setup == "multi_step":
                 avg_mae_train, avg_mse_train, avg_rmse_train = evaluation.compute_metrics_multi_step(
-                    train_env_eval, agent.policy, env_implementation, data_summary, ts_eval_data, forecasting_steps)
+                    train_env_eval, agent.policy, env_implementation, data_summary, ts_train_data, forecasting_steps)
                 visualization.plot_preds_vs_ground_truth_multi_step(
                     log_dir, train_env_eval, agent, total_train_time_h, max_attribute_val, i, env_implementation,
-                    data_summary, ts_eval_data, forecasting_steps, prefix="train")
+                    data_summary, ts_train_data, forecasting_steps, prefix="train")
                 avg_mae_eval, avg_mse_eval, avg_rmse_eval = evaluation.compute_metrics_multi_step(
                     eval_env, agent.policy, env_implementation, data_summary, ts_eval_data, forecasting_steps)
                 visualization.plot_preds_vs_ground_truth_multi_step(
-                    log_dir, train_env_eval, agent, total_train_time_h, max_attribute_val, i, env_implementation,
+                    log_dir, eval_env, agent, total_eval_time_h, max_attribute_val, i, env_implementation,
                     data_summary, ts_eval_data, forecasting_steps, prefix="eval")
             else:
                 logging.info("Setup {} not supported".format(setup))

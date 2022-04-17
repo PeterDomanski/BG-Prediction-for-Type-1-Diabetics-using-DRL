@@ -111,9 +111,14 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
                  (tf.equal(self._steps, self.max_window_count - 1), last)],
                 default=mid)
         else:
+            # step_type = tf.case(
+            #     [(tf.equal(self._steps, 0), first),
+            #      (tf.equal(self._steps, int(len(self.ts_data) / (self.window_size + 1) - 1)), last)],
+            #     default=mid)
             step_type = tf.case(
                 [(tf.equal(self._steps, 0), first),
-                 (tf.equal(self._steps, int(len(self.ts_data) / (self.window_size + 1) - 1)), last)],
+                 (tf.equal(self._steps, int(((len(self.ts_data) - (1 + self.window_size)) / self.window_size) - 1)),
+                  last)],
                 default=mid)
 
         # no discounts
@@ -129,6 +134,7 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         return self._reset()
 
     def _reset(self):
+        self._steps.assign(0)
         self._window_counter.assign(0)
         self._resets.assign_add(1)
         if self.evaluation:
@@ -161,10 +167,10 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         #                  tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
         #                  tf.expand_dims(self._ground_truth_size, 0)
         #                  )))
-        self._current_data_pos.assign_add(1)
+        # self._current_data_pos.assign_add(1)
         self._window_counter.assign_add(1)
         time_step = self.current_time_step()
-        self._steps.assign(0)
+        # self._steps.assign(0)
         return time_step
 
     def step(self, action, policy_state=None):
@@ -198,11 +204,11 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         #                  tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
         #                  tf.expand_dims(self._ground_truth_size, 0)
         #                  )))
-        self._current_data_pos.assign_add(1)
+        # self._current_data_pos.assign_add(1)
         self._window_counter.assign_add(1)
-        if self._current_data_pos + self.window_size < len(self.ts_data):
+        if self._current_data_pos + self.window_size + 1 <= len(self.ts_data):
             if self.max_window_count != -1:
-                if self._window_counter >= self.max_window_count:
+                if self._window_counter > self.max_window_count:
                     return self._reset()
             return self.current_time_step()
         else:
@@ -413,9 +419,16 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
                  (tf.equal(self._steps, self.max_window_count - 1), last)],
                 default=mid)
         else:
+            # step_type = tf.case(
+            #     [(tf.equal(self._steps, 0), first),
+            #      (tf.equal(self._steps, int((len(self.ts_data) / (self.window_size + self.pred_horizon)) - 1)), last)],
+            #     default=mid)
+
             step_type = tf.case(
                 [(tf.equal(self._steps, 0), first),
-                 (tf.equal(self._steps, int(len(self.ts_data) / (self.window_size + self.pred_horizon) - 1)), last)],
+                 (tf.equal(self._steps,
+                           int(((len(self.ts_data) - (self.pred_horizon + self.window_size)) / self.window_size) - 1)),
+                  last)],
                 default=mid)
 
         # no discounts
@@ -431,6 +444,7 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
         return self._reset()
 
     def _reset(self):
+        self._steps.assign(0)
         self._window_counter.assign(0)
         self._resets.assign_add(1)
         if self.evaluation:
@@ -465,10 +479,11 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
         #                  tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
         #                  tf.expand_dims(self._ground_truth_size, 0)
         #                  )))
-        self._current_data_pos.assign_add(self.pred_horizon)
+
+        # self._current_data_pos.assign_add(self.pred_horizon)
         self._window_counter.assign_add(1)
         time_step = self.current_time_step()
-        self._steps.assign(0)
+        # self._steps.assign(0)
         return time_step
 
     def step(self, action, policy_state=None):
@@ -504,11 +519,12 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
         #                  tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
         #                  tf.expand_dims(self._ground_truth_size, 0)
         #                  )))
-        self._current_data_pos.assign_add(self.pred_horizon)
+
+        #self._current_data_pos.assign_add(self.pred_horizon)
         self._window_counter.assign_add(1)
-        if self._current_data_pos + self.window_size + self.pred_horizon < len(self.ts_data):
+        if self._current_data_pos + self.window_size + self.pred_horizon <= len(self.ts_data):
             if self.max_window_count != -1:
-                if self._window_counter >= self.max_window_count:
+                if self._window_counter > self.max_window_count:
                     return self._reset()
             return self.current_time_step()
         else:

@@ -61,18 +61,20 @@ def plot_preds_vs_ground_truth_multi_step(log_dir, env, agent, total_time_h, max
         if len(data_summary) == 0:
             preds.append(tf.squeeze(action_step))
             ground_truth_pos = int(tf.squeeze(time_step.reward))
+            # ground_truth_val = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
             ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
             ground_truth.append(ground_truth_val)
         else:
             preds.append(dataset.undo_data_normalization_sample_wise(tf.squeeze(action_step), data_summary))
             ground_truth_pos = int(tf.squeeze(time_step.reward))
+            # ground_truth_val = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
             ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
             ground_truth.append(dataset.undo_data_normalization_sample_wise(tf.squeeze(ground_truth_val), data_summary))
     preds = tf.concat(preds, -1)
     ground_truth = tf.concat(ground_truth, -1)
     x_values = np.linspace(start=0, stop=total_time_h, num=len(preds))
     ax.plot(x_values, ground_truth, color='green', label="ground_truth")
-    ax.plot(x_values, preds, -1, color='blue', label="rl_prediction")
+    ax.plot(x_values, preds, color='blue', label="rl_prediction")
 
     plt.legend(loc='upper right')
     plt.xlabel("Measurement time in hours")
