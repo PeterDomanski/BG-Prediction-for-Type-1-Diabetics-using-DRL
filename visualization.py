@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 from data import dataset
+from absl import logging
 
 
 def plot_preds_vs_ground_truth_single_step(log_dir, env, agent, total_time_h, max_attribute_val, step,
@@ -51,6 +52,7 @@ def plot_preds_vs_ground_truth_multi_step(log_dir, env, agent, total_time_h, max
 
     while not time_step.is_last():
         action_step, rnn_state, _ = agent.policy.action(time_step, rnn_state)
+        ground_truth_val = env._current_ground_truth
         if use_rnn_state:
             if env_implementation == "tf":
                 time_step = env.step(action_step, rnn_state)
@@ -60,18 +62,21 @@ def plot_preds_vs_ground_truth_multi_step(log_dir, env, agent, total_time_h, max
             time_step = env.step(action_step)
         if len(data_summary) == 0:
             preds.append(tf.squeeze(action_step))
-            ground_truth_pos = int(tf.squeeze(time_step.reward))
+            # ground_truth_pos = int(tf.squeeze(time_step.reward))
             # ground_truth_val = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
-            ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
+            # ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
             ground_truth.append(ground_truth_val)
         else:
             preds.append(dataset.undo_data_normalization_sample_wise(tf.squeeze(action_step), data_summary))
-            ground_truth_pos = int(tf.squeeze(time_step.reward))
+            # ground_truth_pos = int(tf.squeeze(time_step.reward))
             # ground_truth_val = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
-            ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
+            # ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
             ground_truth.append(dataset.undo_data_normalization_sample_wise(tf.squeeze(ground_truth_val), data_summary))
     preds = tf.concat(preds, -1)
     ground_truth = tf.concat(ground_truth, -1)
+    logging.info("Num pred: {}, Num ground truth: {}, Len data set: {}".format(preds.shape[0],
+                                                                               ground_truth.shape[0],
+                                                                               len(ts_data)))
     x_values = np.linspace(start=0, stop=total_time_h, num=len(preds))
     ax.plot(x_values, ground_truth, color='green', label="ground_truth")
     ax.plot(x_values, preds, color='blue', label="rl_prediction")

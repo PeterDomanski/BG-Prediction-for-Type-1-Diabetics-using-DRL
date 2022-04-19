@@ -36,6 +36,8 @@ TsForecastingSingleStepTFEnv.min_attribute_val = 35.0
 TsForecastingSingleStepTFEnv.max_attribute_val = 500.0
 TsForecastingSingleStepTFEnv.max_window_count = 16
 TsForecastingSingleStepTFEnv.batch_size = 1
+# skipping, no_skipping, single_step_shift
+TsForecastingSingleStepTFEnv.state_type = "skipping"
 # ----------------------------------------------------------------------------------------------------------------------
 
 # multi step forecasting
@@ -56,6 +58,8 @@ TsForecastingMultiStepTFEnv.min_attribute_val = 35.0
 TsForecastingMultiStepTFEnv.max_attribute_val = 500.0
 TsForecastingMultiStepTFEnv.max_window_count = 16
 TsForecastingMultiStepTFEnv.batch_size = 1
+# skipping, no_skipping, single_step_shift
+TsForecastingMultiStepTFEnv.state_type = "single_step_shift"
 
 
 

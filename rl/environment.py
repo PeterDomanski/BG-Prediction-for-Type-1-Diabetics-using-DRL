@@ -21,7 +21,7 @@ LAST = ts.StepType.LAST
 class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
     def __init__(self, ts_data, rl_algorithm, data_summary, initial_state_val=0.0, window_size=5, max_window_count=-1,
                  min_attribute_val=35.0, max_attribute_val=500.0, batch_size=1, use_rnn_state=True, state_size=2*64,
-                 use_pred_diff=True, evaluation=False, dtype=tf.float32, scope='TFEnviroment'):
+                 use_pred_diff=True, evaluation=False, state_type="skipping", dtype=tf.float32, scope='TFEnviroment'):
         if len(data_summary) > 0:
             if data_summary['normalization_type'] == 'min_max':
                 min_attribute_val = 0.0
@@ -46,6 +46,7 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         self.use_rnn_state = use_rnn_state
         self.state_size = state_size
         self.use_pred_diff = use_pred_diff
+        self.state_type = state_type
         min_obs_values = [min_attribute_val for _ in range(window_size)]
         max_obs_values = [max_attribute_val for _ in range(window_size)]
         self.total_num_features = window_size
@@ -115,9 +116,16 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
             #     [(tf.equal(self._steps, 0), first),
             #      (tf.equal(self._steps, int(len(self.ts_data) / (self.window_size + 1) - 1)), last)],
             #     default=mid)
+
+            # step_type = tf.case(
+            #     [(tf.equal(self._steps, 0), first),
+            #      (tf.equal(self._steps, int(((len(self.ts_data) - (1 + self.window_size)) / self.window_size) - 1)),
+            #       last)],
+            #     default=mid)
+
             step_type = tf.case(
                 [(tf.equal(self._steps, 0), first),
-                 (tf.equal(self._steps, int(((len(self.ts_data) - (1 + self.window_size)) / self.window_size) - 1)),
+                 (tf.equal(self._steps, int(((len(self.ts_data) - 1) / self.window_size) - 1)),
                   last)],
                 default=mid)
 
@@ -159,8 +167,8 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         #     tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
         #     tf.cast(tf.expand_dims(self.window_size, 0), tf.int32)
         # ))
-        self._current_data_pos.assign_add(self.window_size)
-        self._current_ground_truth.assign(self.ts_data[int(tf.squeeze(self._current_data_pos))])
+        # self._current_data_pos.assign_add(self.window_size)
+        self._current_ground_truth.assign(self.ts_data[int(tf.squeeze(self._current_data_pos)) + self.window_size])
         # self._current_ground_truth.assign(
         #     tf.squeeze(
         #         tf.slice(self.ts_data,
@@ -168,6 +176,17 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         #                  tf.expand_dims(self._ground_truth_size, 0)
         #                  )))
         # self._current_data_pos.assign_add(1)
+        if self.evaluation:
+            self._current_data_pos.assign_add(self.window_size)
+        else:
+            if self.state_type == "skipping":
+                self._current_data_pos.assign_add(self.window_size + 1)
+            elif self.state_type == "no_skipping":
+                self._current_data_pos.assign_add(self.window_size)
+            elif self.state_type == "single_step_shift":
+                self._current_data_pos.assign_add(1)
+            else:
+                logging.info("{} is not supported as state type".format(self.state_type))
         self._window_counter.assign_add(1)
         time_step = self.current_time_step()
         # self._steps.assign(0)
@@ -196,8 +215,8 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         # self._state.assign(tf.slice(self.ts_data,
         #                             tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
         #                             tf.cast(tf.expand_dims(self.window_size, 0), tf.int32)))
-        self._current_data_pos.assign_add(self.window_size)
-        self._current_ground_truth.assign(self.ts_data[int(tf.squeeze(self._current_data_pos))])
+        # self._current_data_pos.assign_add(self.window_size)
+        self._current_ground_truth.assign(self.ts_data[int(tf.squeeze(self._current_data_pos)) + self.window_size])
         # self._current_ground_truth.assign(
         #     tf.squeeze(
         #         tf.slice(self.ts_data,
@@ -205,14 +224,29 @@ class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
         #                  tf.expand_dims(self._ground_truth_size, 0)
         #                  )))
         # self._current_data_pos.assign_add(1)
+        if self.evaluation:
+            self._current_data_pos.assign_add(self.window_size)
+        else:
+            if self.state_type == "skipping":
+                self._current_data_pos.assign_add(self.window_size + 1)
+            elif self.state_type == "no_skipping":
+                self._current_data_pos.assign_add(self.window_size)
+            elif self.state_type == "single_step_shift":
+                self._current_data_pos.assign_add(1)
+            else:
+                logging.info("{} is not supported as state type".format(self.state_type))
         self._window_counter.assign_add(1)
-        if self._current_data_pos + self.window_size + 1 <= len(self.ts_data):
+        if self._current_data_pos + self.window_size + 1 < len(self.ts_data):
             if self.max_window_count != -1:
-                if self._window_counter > self.max_window_count:
-                    return self._reset()
+                if self._window_counter >= self.max_window_count:
+                    time_step = self.current_time_step()
+                    self._reset()
+                    return time_step
             return self.current_time_step()
         else:
-            return self._reset()
+            time_step = self.current_time_step()
+            self._reset()
+            return time_step
 
 
 @gin.configurable
@@ -327,7 +361,8 @@ class TsForecastingSingleStepEnv(gym.Env):
 class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
     def __init__(self, ts_data, rl_algorithm, data_summary, initial_state_val=0.0, pred_horizon=6, window_size=6,
                  max_window_count=-1, min_attribute_val=35.0, max_attribute_val=500.0, batch_size=1,
-                 use_rnn_state=True, state_size=2*64, use_pred_diff=True, evaluation=False, dtype=tf.float32,
+                 use_rnn_state=True, state_size=2*64, use_pred_diff=True, evaluation=False, state_type="skipping",
+                 dtype=tf.float32,
                  scope='TFEnviroment'):
         if len(data_summary) > 0:
             if data_summary['normalization_type'] == 'min_max':
@@ -354,6 +389,7 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
         self.state_size = state_size
         self.use_pred_diff = use_pred_diff
         self.pred_horizon = pred_horizon
+        self.state_type = state_type
         min_obs_values = [min_attribute_val for _ in range(window_size)]
         max_obs_values = [max_attribute_val for _ in range(window_size)]
         self.total_num_features = window_size
@@ -423,11 +459,11 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
             #     [(tf.equal(self._steps, 0), first),
             #      (tf.equal(self._steps, int((len(self.ts_data) / (self.window_size + self.pred_horizon)) - 1)), last)],
             #     default=mid)
-
             step_type = tf.case(
                 [(tf.equal(self._steps, 0), first),
                  (tf.equal(self._steps,
-                           int(((len(self.ts_data) - (self.pred_horizon + self.window_size)) / self.window_size) - 1)),
+                           # int(((len(self.ts_data) - (self.pred_horizon + self.window_size)) / self.window_size)) - 1),
+                           int(((len(self.ts_data) - self.pred_horizon) / self.window_size)) - 1),
                   last)],
                 default=mid)
 
@@ -469,17 +505,27 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
         #     tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
         #     tf.cast(tf.expand_dims(self.window_size, 0), tf.int32)
         # ))
-        self._current_data_pos.assign_add(self.window_size)
+        #self._current_data_pos.assign_add(self.window_size)
         self._current_ground_truth.assign(
-            self.ts_data[int(tf.squeeze(self._current_data_pos)):
-                         int(tf.squeeze(self._current_data_pos)) + self.pred_horizon])
+            self.ts_data[int(tf.squeeze(self._current_data_pos)) + self.window_size:
+                         int(tf.squeeze(self._current_data_pos)) + self.window_size + self.pred_horizon])
         # self._current_ground_truth.assign(
         #     tf.squeeze(
         #         tf.slice(self.ts_data,
         #                  tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
         #                  tf.expand_dims(self._ground_truth_size, 0)
         #                  )))
-
+        if self.evaluation:
+            self._current_data_pos.assign_add(self.window_size)
+        else:
+            if self.state_type == "skipping":
+                self._current_data_pos.assign_add(self.window_size + self.pred_horizon)
+            elif self.state_type == "no_skipping":
+                self._current_data_pos.assign_add(self.window_size)
+            elif self.state_type == "single_step_shift":
+                self._current_data_pos.assign_add(1)
+            else:
+                logging.info("{} is not supported as state type".format(self.state_type))
         # self._current_data_pos.assign_add(self.pred_horizon)
         self._window_counter.assign_add(1)
         time_step = self.current_time_step()
@@ -509,10 +555,10 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
         # self._state.assign(tf.slice(self.ts_data,
         #                             tf.cast(tf.expand_dims(self._current_data_pos, 0), tf.int32),
         #                             tf.cast(tf.expand_dims(self.window_size, 0), tf.int32)))
-        self._current_data_pos.assign_add(self.window_size)
+        # self._current_data_pos.assign_add(self.window_size)
         self._current_ground_truth.assign(
-            self.ts_data[int(tf.squeeze(self._current_data_pos)):
-                         int(tf.squeeze(self._current_data_pos)) + self.pred_horizon])
+            self.ts_data[int(tf.squeeze(self._current_data_pos)) + self.window_size:
+                         int(tf.squeeze(self._current_data_pos)) + self.window_size + self.pred_horizon])
         # self._current_ground_truth.assign(
         #     tf.squeeze(
         #         tf.slice(self.ts_data,
@@ -521,14 +567,29 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
         #                  )))
 
         #self._current_data_pos.assign_add(self.pred_horizon)
+        if self.evaluation:
+            self._current_data_pos.assign_add(self.window_size)
+        else:
+            if self.state_type == "skipping":
+                self._current_data_pos.assign_add(self.window_size + self.pred_horizon)
+            elif self.state_type == "no_skipping":
+                self._current_data_pos.assign_add(self.window_size)
+            elif self.state_type == "single_step_shift":
+                self._current_data_pos.assign_add(1)
+            else:
+                logging.info("{} is not supported as state type".format(self.state_type))
         self._window_counter.assign_add(1)
-        if self._current_data_pos + self.window_size + self.pred_horizon <= len(self.ts_data):
+        if self._current_data_pos + self.window_size + self.pred_horizon < len(self.ts_data):
             if self.max_window_count != -1:
-                if self._window_counter > self.max_window_count:
-                    return self._reset()
+                if self._window_counter >= self.max_window_count:
+                    time_step = self.current_time_step()
+                    self._reset()
+                    return time_step
             return self.current_time_step()
         else:
-            return self._reset()
+            time_step = self.current_time_step()
+            self._reset()
+            return time_step
 
 
 @gin.configurable

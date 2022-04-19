@@ -1,5 +1,6 @@
 import tensorflow as tf
 from data import dataset
+import csv
 
 
 def compute_avg_return(env, policy, env_implementation, data_summary, num_iter=16, normalize=False, use_rnn_state=True):
@@ -35,8 +36,8 @@ def compute_avg_return(env, policy, env_implementation, data_summary, num_iter=1
     return tf.squeeze(avg_return)
 
 
-def compute_metrics_single_step(env, policy, env_implementation, data_summary, metrics=['mae', 'mse', 'rmse'],
-                                num_iter=1, use_rnn_state=True):
+def compute_metrics_single_step(env, policy, env_implementation, data_summary, step, log_dir,
+                                metrics=['mae', 'mse', 'rmse'], num_iter=1, use_rnn_state=True, prefix="train"):
     if 'mae' in metrics:
         total_mae = 0.0
     if 'mse' in metrics:
@@ -55,6 +56,7 @@ def compute_metrics_single_step(env, policy, env_implementation, data_summary, m
         step_counter = 0
 
         while not time_step.is_last():
+            parameter_values = {}
             step_counter += 1
             action_step, rnn_state, _ = policy.action(time_step, rnn_state)
             if use_rnn_state:
@@ -72,11 +74,27 @@ def compute_metrics_single_step(env, policy, env_implementation, data_summary, m
                 agent_pred = dataset.undo_data_normalization_sample_wise(tf.squeeze(action_step), data_summary)
                 ground_truth = dataset.undo_data_normalization_sample_wise(time_step.reward, data_summary)
             if 'mae' in metrics:
-                episode_mae += tf.math.abs(agent_pred - ground_truth)
+                mae_val = tf.math.abs(agent_pred - ground_truth)
+                episode_mae += mae_val
+                parameter_values['mae'] = tf.squeeze(mae_val).numpy()
             if 'mse' in metrics:
-                episode_mse += (agent_pred - ground_truth) ** 2
+                mse_val = (agent_pred - ground_truth) ** 2
+                episode_mse += mse_val
+                parameter_values['mse'] = tf.squeeze(mse_val).numpy()
             if 'rmse' in metrics:
-                episode_rmse += (agent_pred - ground_truth) ** 2
+                rmse_val = (agent_pred - ground_truth) ** 2
+                episode_rmse += rmse_val
+                parameter_values['rmse'] = tf.squeeze(rmse_val).numpy()
+
+            action_distribution = policy.distribution(time_step, rnn_state)[0]
+            if len(data_summary) == 0:
+                action_mean = action_distribution.mean()
+            else:
+                action_mean = dataset.undo_data_normalization_sample_wise(action_distribution.mean(), data_summary)
+            parameter_values['mean'] = tf.squeeze(action_mean).numpy()
+            action_variance = calculate_action_variance(action_distribution, action_mean, data_summary)
+            parameter_values['variance'] = tf.squeeze(action_variance).numpy()
+            write_to_csv_file(parameter_values, step, log_dir, prefix)
 
         if 'mae' in metrics:
             total_mae += episode_mae / step_counter
@@ -163,9 +181,8 @@ def compute_metrics_single_step(env, policy, env_implementation, data_summary, m
 #     return tf.squeeze(avg_rmse)
 
 
-def compute_metrics_multi_step(env, policy, env_implementation, data_summary, ts_data, pred_horizon,
-                               metrics=['mae', 'mse', 'rmse'],
-                               num_iter=1, use_rnn_state=True):
+def compute_metrics_multi_step(env, policy, env_implementation, data_summary, ts_data, pred_horizon, step, log_dir,
+                               metrics=['mae', 'mse', 'rmse'],  num_iter=1, use_rnn_state=True, prefix="train"):
     if 'mae' in metrics:
         total_mae = 0.0
     if 'mse' in metrics:
@@ -184,8 +201,10 @@ def compute_metrics_multi_step(env, policy, env_implementation, data_summary, ts
         step_counter = 0
 
         while not time_step.is_last():
+            parameter_values = {}
             step_counter += 1
             action_step, rnn_state, _ = policy.action(time_step, rnn_state)
+            ground_truth = env._current_ground_truth
             if use_rnn_state:
                 if env_implementation == "tf":
                     time_step = env.step(action_step, rnn_state)
@@ -196,21 +215,37 @@ def compute_metrics_multi_step(env, policy, env_implementation, data_summary, ts
             # agent forecast
             if len(data_summary) == 0:
                 agent_pred = tf.squeeze(action_step)
-                ground_truth_pos = int(tf.squeeze(time_step.reward))
+                # ground_truth_pos = int(tf.squeeze(time_step.reward))
                 # ground_truth = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
-                ground_truth = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
+                # ground_truth = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
             else:
                 agent_pred = dataset.undo_data_normalization_sample_wise(tf.squeeze(action_step), data_summary)
-                ground_truth_pos = int(tf.squeeze(time_step.reward))
+                # ground_truth_pos = int(tf.squeeze(time_step.reward))
                 # ground_truth = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
-                ground_truth = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
+                # ground_truth = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
                 ground_truth = dataset.undo_data_normalization_sample_wise(ground_truth, data_summary)
             if 'mae' in metrics:
-                episode_mae += tf.math.reduce_mean(tf.math.abs(agent_pred - ground_truth))
+                episode_mae_val = tf.math.abs(agent_pred - ground_truth)
+                episode_mae += tf.math.reduce_mean(episode_mae_val)
+                parameter_values['mae'] = tf.squeeze(episode_mae_val).numpy()
             if 'mse' in metrics:
-                episode_mse += tf.math.reduce_mean((agent_pred - ground_truth) ** 2)
+                episode_mse_val = (agent_pred - ground_truth) ** 2
+                episode_mse += tf.math.reduce_mean(episode_mse_val)
+                parameter_values['mse'] = tf.squeeze(episode_mse_val).numpy()
             if 'rmse' in metrics:
-                episode_rmse += tf.math.reduce_mean((agent_pred - ground_truth) ** 2)
+                episode_rmse_val = (agent_pred - ground_truth) ** 2
+                episode_rmse += tf.math.reduce_mean(episode_rmse_val)
+                parameter_values['rmse'] = tf.squeeze(episode_rmse_val).numpy()
+
+            action_distribution = policy.distribution(time_step, rnn_state)[0]
+            if len(data_summary) == 0:
+                action_mean = action_distribution.mean()
+            else:
+                action_mean = dataset.undo_data_normalization_sample_wise(action_distribution.mean(), data_summary)
+            parameter_values['mean'] = tf.squeeze(action_mean).numpy()
+            action_variance = calculate_action_variance(action_distribution, action_mean, data_summary)
+            parameter_values['variance'] = tf.squeeze(action_variance).numpy()
+            write_to_csv_file(parameter_values, step, log_dir, prefix)
 
         if 'mae' in metrics:
             total_mae += episode_mae / step_counter
@@ -226,6 +261,31 @@ def compute_metrics_multi_step(env, policy, env_implementation, data_summary, ts
     if 'mae' in metrics:
         avg_rmse = total_rmse / num_iter
     return tf.squeeze(avg_mae), tf.squeeze(avg_mse), tf.squeeze(avg_rmse)
+
+
+def calculate_action_variance(action_distribution, mean, data_summary, num_steps=1000):
+    variance = 0.0
+    for _ in range(num_steps):
+        if len(data_summary) == 0:
+            s = action_distribution.sample()
+        else:
+            s = dataset.undo_data_normalization_sample_wise(action_distribution.sample(), data_summary)
+        variance += (s - mean) ** 2
+
+    variance = variance / num_steps
+    return variance
+
+
+def write_to_csv_file(parameter_values, step, log_dir, prefix):
+    fieldnames = []
+    for name in parameter_values.keys():
+        fieldnames.append(name)
+
+    with open(log_dir + "/performance_summary_" + str(step) + "_" + prefix + ".csv", 'a+') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        if csv_file.tell() == 0:
+            writer.writeheader()
+        writer.writerow(parameter_values)
 
 
 # def compute_mae_multi_step(env, policy, ts_eval_data, forecasting_steps, num_iter=1):
