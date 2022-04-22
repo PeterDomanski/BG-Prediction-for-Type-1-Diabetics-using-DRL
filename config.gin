@@ -3,15 +3,24 @@
 run.path_to_train_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-training.csv"
 # if path to eval data empty only training data is used
 # Ohio data: /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing.csv
-run.path_to_eval_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing.csv"
-run.setup = "single_step"
+# /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing_100.csv
+run.path_to_eval_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing_100.csv"
+run.normalization = True
+# min_max, mean, z_score
+run.normalization_type = "z_score"
+run.setup = "multi_step"
 run.rl_algorithm = "sac"
+run.env_implementation = "tf"
 run.use_gpu = False
 
 rl_training_loop.max_train_steps = 2500
-rl_training_loop.eval_interval = 50
+rl_training_loop.eval_interval = 500
+rl_training_loop.preheat_phase = False
 
+# ----------------------------------------------------------------------------------------------------------------------
 # single step forecasting
+
+# gym environment implementation
 TsForecastingSingleStepEnv.window_size = 5
 # CGM: min 35.0, max 500.0 (note: dqn -> min 0.0)
 TsForecastingSingleStepEnv.min_attribute_val = 35.0
@@ -19,6 +28,17 @@ TsForecastingSingleStepEnv.max_attribute_val = 500.0
 TsForecastingSingleStepEnv.reward_def = "abs_diff"
 # specify max number of windows per RL iteration; -1 to use as much as possible with random starting point
 TsForecastingSingleStepEnv.max_window_count = 16
+
+# tensorflow environment implementation
+TsForecastingSingleStepTFEnv.window_size = 5
+# default: min=35.0, max=500.0
+TsForecastingSingleStepTFEnv.min_attribute_val = 35.0
+TsForecastingSingleStepTFEnv.max_attribute_val = 500.0
+TsForecastingSingleStepTFEnv.max_window_count = 16
+TsForecastingSingleStepTFEnv.batch_size = 1
+# skipping, no_skipping, single_step_shift
+TsForecastingSingleStepTFEnv.state_type = "skipping"
+# ----------------------------------------------------------------------------------------------------------------------
 
 # multi step forecasting
 TsForecastingMultiStepEnv.window_size = 12
@@ -29,6 +49,17 @@ TsForecastingMultiStepEnv.max_attribute_val = 5.0
 TsForecastingMultiStepEnv.reward_def = "linear"
 # specify max number of windows per RL iteration; -1 to use as much as possible with random starting point
 TsForecastingMultiStepEnv.max_window_count = 100
+
+# tensorflow environment implementation
+TsForecastingMultiStepTFEnv.window_size = 6
+TsForecastingMultiStepTFEnv.pred_horizon = 6
+# default: min=35.0, max=500.0
+TsForecastingMultiStepTFEnv.min_attribute_val = 35.0
+TsForecastingMultiStepTFEnv.max_attribute_val = 500.0
+TsForecastingMultiStepTFEnv.max_window_count = 16
+TsForecastingMultiStepTFEnv.batch_size = 1
+# skipping, no_skipping, single_step_shift
+TsForecastingMultiStepTFEnv.state_type = "skipping"
 
 
 

@@ -1,5 +1,5 @@
 import tensorflow as tf
-import tf_agents
+# import tf_agents
 from absl import logging
 from tf_agents.agents.ddpg import actor_rnn_network, critic_rnn_network, ddpg_agent
 from tf_agents.agents.sac import sac_agent
@@ -21,9 +21,22 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
 
     if rl_algorithm == "ddpg":
         with strategy.scope():
-            actor_net = actor_rnn_network.ActorRnnNetwork(observation_spec, action_spec)
+            actor_net = actor_rnn_network.ActorRnnNetwork(observation_spec,
+                                                          action_spec,
+                                                          input_fc_layer_params=(256, 256),
+                                                          lstm_size=(64, ),
+                                                          output_fc_layer_params=(256, 256),
+                                                          activation_fn=tf.keras.activations.relu)
             critic_net = critic_rnn_network.CriticRnnNetwork((observation_spec, action_spec),
-                                                             lstm_size=(40, ))
+                                                             lstm_size=(64, ),
+                                                             observation_fc_layer_params=(256, 256),
+                                                             action_fc_layer_params=(128,),
+                                                             joint_fc_layer_params=(256, 256),
+                                                             output_fc_layer_params=(256, 256),
+                                                             activation_fn=tf.keras.activations.relu,
+                                                             kernel_initializer='glorot_uniform',
+                                                             last_kernel_initializer='glorot_uniform'
+                                                             )
             train_step = train_utils.create_train_step()
 
         agent = ddpg_agent.DdpgAgent(
@@ -37,15 +50,26 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             train_step_counter=train_step
         )
     elif rl_algorithm == "sac":
+        # Hyperparameter setting as in https://www.tensorflow.org/agents/tutorials/7_SAC_minitaur_tutorial
         with strategy.scope():
             critic_net = critic_rnn_network.CriticRnnNetwork(
                 (observation_spec, action_spec),
-                lstm_size=(40,)
+                lstm_size=(256,),
+                observation_fc_layer_params=(256, 256),
+                action_fc_layer_params=(128, ),
+                joint_fc_layer_params=(256, 256),
+                output_fc_layer_params=(256, 256),
+                activation_fn=tf.keras.activations.relu,
+                kernel_initializer='glorot_uniform',
+                last_kernel_initializer='glorot_uniform'
             )
-            actor_net = tf_agents.networks.actor_distribution_rnn_network.ActorDistributionRnnNetwork(
+            actor_net = actor_distribution_rnn_network.ActorDistributionRnnNetwork(
                 observation_spec,
                 action_spec,
-                lstm_size=(40,),
+                lstm_size=(256,),
+                input_fc_layer_params=(256, 512, 256),
+                output_fc_layer_params=(256, 512, 256),
+                activation_fn=tf.keras.activations.relu,
                 continuous_projection_net=tanh_normal_projection_network.TanhNormalProjectionNetwork
             )
             train_step = train_utils.create_train_step()
@@ -55,22 +79,33 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             action_spec,
             actor_network=actor_net,
             critic_network=critic_net,
-            actor_optimizer=tf.keras.optimizers.Adam(),
-            critic_optimizer=tf.keras.optimizers.Adam(),
-            alpha_optimizer=tf.keras.optimizers.Adam(),
+            actor_optimizer=tf.keras.optimizers.Adam(learning_rate=5e-4),
+            critic_optimizer=tf.keras.optimizers.Adam(learning_rate=5e-4),
+            alpha_optimizer=tf.keras.optimizers.Adam(learning_rate=5e-4),
             target_update_period=100,
+            target_update_tau=0.005,
+            gamma=1.0,
+            reward_scale_factor=1.0,
             train_step_counter=train_step
         )
 
     elif rl_algorithm == "ppo":
         with strategy.scope():
-            actor_net = tf_agents.networks.actor_distribution_rnn_network.ActorDistributionRnnNetwork(
+            actor_net = actor_distribution_rnn_network.ActorDistributionRnnNetwork(
                 observation_spec,
                 action_spec,
-                lstm_size=(40,)
+                lstm_size=(64,),
+                input_fc_layer_params=(256, 256),
+                output_fc_layer_params=(256, 256),
+                activation_fn=tf.keras.activations.relu,
+                continuous_projection_net=tanh_normal_projection_network.TanhNormalProjectionNetwork
             )
             value_net = value_rnn_network.ValueRnnNetwork(
                 observation_spec,
+                input_fc_layer_params=(256, 256),
+                lstm_size=(64,),
+                output_fc_layer_params=(256, 256),
+                activation_fn=tf.keras.activations.relu
             )
             train_step = train_utils.create_train_step()
 
@@ -87,7 +122,10 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             q_net = q_rnn_network.QRnnNetwork(
                 observation_spec,
                 action_spec,
-                lstm_size=(40,)
+                input_fc_layer_params=(256, 256),
+                lstm_size=(64,),
+                output_fc_layer_params=(256, 256),
+                activation_fn=tf.keras.activations.relu,
             )
             train_step = train_utils.create_train_step()
         agent = dqn_agent.DqnAgent(
@@ -100,9 +138,12 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
         )
     elif rl_algorithm == "td3":
         with strategy.scope():
-            actor_net = actor_rnn_network.ActorRnnNetwork(observation_spec, action_spec)
+            actor_net = actor_rnn_network.ActorRnnNetwork(observation_spec,
+                                                          action_spec,
+                                                          lstm_size=(64, ),
+                                                          activation_fn=tf.keras.activations.relu)
             critic_net = critic_rnn_network.CriticRnnNetwork((observation_spec, action_spec),
-                                                             lstm_size=(40,))
+                                                             lstm_size=(64,))
             train_step = train_utils.create_train_step()
 
         agent = td3_agent.Td3Agent(
@@ -117,20 +158,32 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             train_step_counter=train_step
         )
     elif rl_algorithm == "reinforce":
+        # Hyperparameter setting as in https://www.tensorflow.org/agents/tutorials/6_reinforce_tutorial
         with strategy.scope():
             actor_net = actor_distribution_rnn_network.ActorDistributionRnnNetwork(
                 observation_spec,
                 action_spec,
-                lstm_size=(40,))
-            value_net = value_rnn_network.ValueRnnNetwork(observation_spec)
+                lstm_size=(64,),
+                input_fc_layer_params=(256, 256),
+                output_fc_layer_params=(256, 256),
+                activation_fn=tf.keras.activations.relu,
+                continuous_projection_net=tanh_normal_projection_network.TanhNormalProjectionNetwork
+            )
+            value_net = value_rnn_network.ValueRnnNetwork(observation_spec,
+                                                          input_fc_layer_params=(256, 256),
+                                                          lstm_size=(64,),
+                                                          output_fc_layer_params=(256, 256),
+                                                          activation_fn=tf.keras.activations.relu,
+                                                          )
             train_step = train_utils.create_train_step()
 
         agent = reinforce_agent.ReinforceAgent(
             time_step_spec,
             action_spec,
             actor_network=actor_net,
-            optimizer=tf.keras.optimizers.Adam(),
+            optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
             value_network=value_net,
+            normalize_returns=True,
             train_step_counter=train_step
         )
     else:
