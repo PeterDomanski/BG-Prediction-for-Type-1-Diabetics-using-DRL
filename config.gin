@@ -14,7 +14,7 @@ run.env_implementation = "tf"
 run.use_gpu = False
 
 rl_training_loop.max_train_steps = 2500
-rl_training_loop.eval_interval = 50
+rl_training_loop.eval_interval = 500
 rl_training_loop.preheat_phase = False
 
 # ----------------------------------------------------------------------------------------------------------------------
@@ -59,7 +59,7 @@ TsForecastingMultiStepTFEnv.max_attribute_val = 500.0
 TsForecastingMultiStepTFEnv.max_window_count = 16
 TsForecastingMultiStepTFEnv.batch_size = 1
 # skipping, no_skipping, single_step_shift
-TsForecastingMultiStepTFEnv.state_type = "single_step_shift"
+TsForecastingMultiStepTFEnv.state_type = "skipping"
 
 
 

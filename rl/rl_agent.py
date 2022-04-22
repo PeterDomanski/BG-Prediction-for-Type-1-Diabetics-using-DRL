@@ -54,7 +54,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
         with strategy.scope():
             critic_net = critic_rnn_network.CriticRnnNetwork(
                 (observation_spec, action_spec),
-                lstm_size=(64,),
+                lstm_size=(256,),
                 observation_fc_layer_params=(256, 256),
                 action_fc_layer_params=(128, ),
                 joint_fc_layer_params=(256, 256),
@@ -66,7 +66,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             actor_net = actor_distribution_rnn_network.ActorDistributionRnnNetwork(
                 observation_spec,
                 action_spec,
-                lstm_size=(64,),
+                lstm_size=(256,),
                 input_fc_layer_params=(256, 512, 256),
                 output_fc_layer_params=(256, 512, 256),
                 activation_fn=tf.keras.activations.relu,

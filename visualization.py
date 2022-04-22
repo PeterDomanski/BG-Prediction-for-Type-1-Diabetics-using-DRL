@@ -52,7 +52,8 @@ def plot_preds_vs_ground_truth_multi_step(log_dir, env, agent, total_time_h, max
 
     while not time_step.is_last():
         action_step, rnn_state, _ = agent.policy.action(time_step, rnn_state)
-        ground_truth_val = env._current_ground_truth
+        # ground_truth_val = env._current_ground_truth
+        ground_truth_pos = int(tf.squeeze(env._current_data_pos))
         if use_rnn_state:
             if env_implementation == "tf":
                 time_step = env.step(action_step, rnn_state)
@@ -64,13 +65,13 @@ def plot_preds_vs_ground_truth_multi_step(log_dir, env, agent, total_time_h, max
             preds.append(tf.squeeze(action_step))
             # ground_truth_pos = int(tf.squeeze(time_step.reward))
             # ground_truth_val = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
-            # ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
+            ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
             ground_truth.append(ground_truth_val)
         else:
             preds.append(dataset.undo_data_normalization_sample_wise(tf.squeeze(action_step), data_summary))
             # ground_truth_pos = int(tf.squeeze(time_step.reward))
             # ground_truth_val = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
-            # ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
+            ground_truth_val = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
             ground_truth.append(dataset.undo_data_normalization_sample_wise(tf.squeeze(ground_truth_val), data_summary))
     preds = tf.concat(preds, -1)
     ground_truth = tf.concat(ground_truth, -1)
