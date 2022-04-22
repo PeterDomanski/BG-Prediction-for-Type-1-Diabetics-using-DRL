@@ -71,13 +71,8 @@ We test the different algorithms in a single and multi step scenario on a debug 
 data set can be found in the repository in ./data/RasberryPi.csv
 
 ### TODO's
-- Continuous or discrete action space -> should prediction, here CGM, be continuous or discrete?
-- Reward function design, e.g., linear reward definition
 - Use different replay buffers -> reverb replay buffer (deepmind)
-- Driver implementation as tf.function
 - Curriculum learning
-- Hyperparameter tuning
-- More configuration options
-- Visualization of CGM values (multi step scenario)
+- Automatic Hyperparameter tuning
 - Tests for single step and multi step scenarios with debug data and different RL algorithms
 
