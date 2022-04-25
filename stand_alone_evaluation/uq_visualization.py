@@ -8,7 +8,7 @@ argparser = argparse.ArgumentParser()
 args = argparser.parse_args()
 argparser.add_argument("--csv_path", dest="csv_path", default=".")
 argparser.add_argument("--setup", dest="setup", default="multi_step")
-argparser.add_argument("--save_fig", dest="save_fig", default=False)
+argparser.add_argument("--save_fig", dest="save_fig", default=True)
 argparser.add_argument("--save_path", dest="save_path", default=".")
 args = argparser.parse_args()
 

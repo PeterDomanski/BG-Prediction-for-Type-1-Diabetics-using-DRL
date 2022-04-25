@@ -28,6 +28,29 @@ Here is an overview of the proposed methodology:
         Options: tf, gym
     - use_gpu [bool]: Specify to explictily use a GPU 
 
+### Stand-alone scripts
+1) metric_eval_csv.py
+   - Script to calculate the standard metrics (MAE, MSE, RMSE, ...) for arbitrary data sequences 
+   - Stand-alone script that can be called directly from the terminal, e.g. ```python metric_eval_csv.py```
+   - It has the following configuration parameters (arguments of the python call)
+     - csv_path [str]: path to csv data set
+     - metrics [str]: metrics to evaluate, e.g., 'mse, rmse'
+     - indices [str]: 'min_index, max_index' of samples to evaluate
+     - strategy [str]: 'consecutive' or 'random' samples
+     - setup [str]: 'single_step' or 'multi_step' scenario
+   - Thus, a call of the script can look the following (including all arguments) <br/>
+   ``` python metric_eval_csv.py --csv_path="." --metrics="mse,rmse" --indices="0,100" --strategy="consecutive" --setup="multi_step"```
+2) uq_visualization.py
+   - Script to visualize UQ (variance) samples of training iterations
+   - Stand-alone script that can be called directly from the terminal, e.g. ```python uq_visualization.py```
+   - It has the following configuration parameters (arguments of the python call)
+     - csv_path [str]: path to csv data set
+     - setup [str]: 'single_step' or 'multi_step' scenario
+     - save_fig [str]: "True" or "False"
+     - save_path [str]: path to store figure
+   - Thus, a call of the script can look the following (including all arguments) <br/>
+   ``` python uq_visualization.py --csv_path="." --setup="multi_step" --save_fig="True", --save_path="."```
+
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)
 ```
