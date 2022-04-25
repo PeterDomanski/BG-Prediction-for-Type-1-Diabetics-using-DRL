@@ -56,7 +56,7 @@ TsForecastingMultiStepTFEnv.pred_horizon = 6
 # default: min=35.0, max=500.0
 TsForecastingMultiStepTFEnv.min_attribute_val = 35.0
 TsForecastingMultiStepTFEnv.max_attribute_val = 500.0
-TsForecastingMultiStepTFEnv.max_window_count = 16
+TsForecastingMultiStepTFEnv.max_window_count = 1024
 TsForecastingMultiStepTFEnv.batch_size = 1
 # skipping, no_skipping, single_step_shift
 TsForecastingMultiStepTFEnv.state_type = "skipping"
