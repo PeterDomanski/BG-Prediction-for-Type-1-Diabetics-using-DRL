@@ -7,13 +7,15 @@ from rl import tf_driver
 import tensorflow as tf
 import evaluation
 import visualization
+import numpy as np
+import os
 
 
 @gin.configurable
 def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_train, agent, ts_train_data, ts_eval_data,
                      file_writer, setup, forecasting_steps, rl_algorithm, total_train_time_h, total_eval_time_h,
                      max_attribute_val, num_iter, data_summary, env_implementation, max_train_steps=1000,
-                     eval_interval=100, preheat_phase=False):
+                     eval_interval=100, preheat_phase=False, restore_dir=""):
     # train_env_eval (train env with ground truth as reward) and
     # eval_env_train (eval env with standard reward definition) are for validation purposes
     on_policy_algorithms = ["reinforce", "ppo"]
@@ -115,8 +117,11 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
                     actor_net = agent._actor_network
                 elif rl_algorithm == "dqn":
                     actor_net = agent._q_network
+                if restore_dir != "":
+                    restore_actor_network_parameters(actor_net, restore_dir)
                 for actor_var in actor_net.trainable_variables:
                     tf.summary.histogram(actor_var.name, actor_var, i)
+                save_actor_network_parameters(log_dir, actor_net, i)
         if env_implementation == "tf":
             train_loss = collect_driver.train_step()
         else:
@@ -151,3 +156,31 @@ def get_collect_driver(env, policy, observers, num_iter=128, driver_type="episod
                                                            policy,
                                                            observers=observers,
                                                            num_episodes=num_iter)
+
+
+def save_actor_network_parameters(log_dir, actor_net, step):
+    if not os.path.isdir(log_dir + "/w&b/step_" + str(step)):
+        os.makedirs(log_dir + "/w&b/step_" + str(step))
+    for i, v in enumerate(actor_net.trainable_variables):
+        n = v.name.split('/')[-4] + "_" + v.name.split('/')[-3] + "_" + v.name.split('/')[-2] + "_" + \
+               v.name.split('/')[-1]
+        weights_file = open(
+            log_dir + "/w&b/step_" + str(step) + "/0" + str(i) + "_" + n + ".txt", "w")
+        val = v.numpy()
+        if len(val.shape) == 2:
+            for row in val:
+                np.savetxt(weights_file, row)
+        elif len(val.shape) == 1:
+            np.savetxt(weights_file, val)
+
+        weights_file.close()
+
+
+def restore_actor_network_parameters(actor_net, restore_dir):
+    param_files = sorted(os.listdir(restore_dir), key=lambda index: int(index.split("_")[0]))
+    network_parameters = []
+    for i, file in enumerate(param_files):
+        param_val = np.loadtxt(os.path.join(restore_dir, file)).reshape(actor_net.trainable_variables[i].shape)
+        network_parameters.append(param_val)
+    actor_net.set_weights(network_parameters)
+

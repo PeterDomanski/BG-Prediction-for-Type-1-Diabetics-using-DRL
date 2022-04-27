@@ -20,7 +20,7 @@ LAST = ts.StepType.LAST
 @gin.configurable
 class TsForecastingSingleStepTFEnv(tf_environment.TFEnvironment):
     def __init__(self, ts_data, rl_algorithm, data_summary, initial_state_val=0.0, window_size=5, max_window_count=-1,
-                 min_attribute_val=35.0, max_attribute_val=500.0, batch_size=1, use_rnn_state=True, state_size=2*64,
+                 min_attribute_val=35.0, max_attribute_val=500.0, batch_size=1, use_rnn_state=True, state_size=2*256,
                  use_pred_diff=True, evaluation=False, state_type="skipping", dtype=tf.float32, scope='TFEnviroment'):
         if len(data_summary) > 0:
             if data_summary['normalization_type'] == 'min_max':

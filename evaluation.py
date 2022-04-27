@@ -75,6 +75,8 @@ def compute_metrics_single_step(env, policy, env_implementation, data_summary, s
             else:
                 agent_pred = dataset.undo_data_normalization_sample_wise(tf.squeeze(action_step), data_summary)
                 ground_truth = dataset.undo_data_normalization_sample_wise(time_step.reward, data_summary)
+            parameter_values['ground_truth'] = ground_truth.numpy()
+            parameter_values['prediction'] = agent_pred.numpy()
             if 'mae' in metrics:
                 mae_val = tf.math.abs(agent_pred - ground_truth)
                 episode_mae += mae_val
@@ -162,6 +164,8 @@ def compute_metrics_multi_step(env, policy, env_implementation, data_summary, ts
                 # ground_truth = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
                 ground_truth = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
                 ground_truth = dataset.undo_data_normalization_sample_wise(ground_truth, data_summary)
+            parameter_values['ground_truth'] = ground_truth.values
+            parameter_values['prediction'] = agent_pred.numpy()
             if 'mae' in metrics:
                 episode_mae_val = tf.math.abs(agent_pred - ground_truth)
                 episode_mae += tf.math.reduce_mean(episode_mae_val)
