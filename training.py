@@ -58,7 +58,20 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
             for _ in range(1000):
                 collect_driver.collect_step()
 
+    best_avg_rmse = float("-inf")
     for i in range(max_train_steps + 1):
+        if restore_dir != "":
+            logging.info("Restore model(s) from {}".format(restore_dir))
+            if rl_algorithm == "sac":
+                restore_network_parameters(agent._actor_network, os.path.join(restore_dir, "actor_network"))
+                restore_network_parameters(agent._critic_network_1, os.path.join(restore_dir, "critic_network_1"))
+                restore_network_parameters(agent._critic_network_2, os.path.join(restore_dir, "critic_network_2"))
+                restore_network_parameters(agent._target_critic_network_1,
+                                           os.path.join(restore_dir, "target_critic_network_1"))
+                restore_network_parameters(agent._target_critic_network_2,
+                                           os.path.join(restore_dir, "target_critic_network_2"))
+            else:
+                logging.info("Model restoring not implemented yet for {}".format(rl_algorithm))
         logging.info("Start training iteration {}".format(i))
         if i % eval_interval == 0:
             # compute average return on train data
@@ -117,11 +130,20 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
                     actor_net = agent._actor_network
                 elif rl_algorithm == "dqn":
                     actor_net = agent._q_network
-                if restore_dir != "":
-                    restore_actor_network_parameters(actor_net, restore_dir)
                 for actor_var in actor_net.trainable_variables:
                     tf.summary.histogram(actor_var.name, actor_var, i)
-                save_actor_network_parameters(log_dir, actor_net, i)
+            # save parameters of all relevant networks
+            if avg_rmse_eval < best_avg_rmse:
+                if rl_algorithm == "sac":
+                    save_network_parameters(log_dir, actor_net, "actor_network")
+                    save_network_parameters(log_dir, agent._critic_network_1, "critic_network_1")
+                    save_network_parameters(log_dir, agent._critic_network_2, "critic_network_2")
+                    save_network_parameters(log_dir, agent._target_critic_network_1, "target_critic_network_1")
+                    save_network_parameters(log_dir, agent._target_critic_network_2, "target_critic_network_2")
+                else:
+                    logging.info("Model saving not implemented yet for {}".format(rl_algorithm))
+                best_avg_rmse = avg_rmse_eval
+
         if env_implementation == "tf":
             train_loss = collect_driver.train_step()
         else:
@@ -158,14 +180,16 @@ def get_collect_driver(env, policy, observers, num_iter=128, driver_type="episod
                                                            num_episodes=num_iter)
 
 
-def save_actor_network_parameters(log_dir, actor_net, step):
-    if not os.path.isdir(log_dir + "/w&b/step_" + str(step)):
-        os.makedirs(log_dir + "/w&b/step_" + str(step))
-    for i, v in enumerate(actor_net.trainable_variables):
-        n = v.name.split('/')[-4] + "_" + v.name.split('/')[-3] + "_" + v.name.split('/')[-2] + "_" + \
-               v.name.split('/')[-1]
+def save_network_parameters(log_dir, net, net_name=""):
+    if not os.path.isdir(log_dir + "/w&b/" + net_name):
+        os.makedirs(log_dir + "/w&b/" + net_name)
+    for i, v in enumerate(net.trainable_variables):
+        name = ""
+        for n in v.name.split("/")[1:]:
+            name += (n + "_")
+        name = name[:-1]
         weights_file = open(
-            log_dir + "/w&b/step_" + str(step) + "/0" + str(i) + "_" + n + ".txt", "w")
+            log_dir + "/w&b/" + net_name + "/0" + str(i) + "_" + name + ".txt", "w")
         val = v.numpy()
         if len(val.shape) == 2:
             for row in val:
@@ -176,11 +200,11 @@ def save_actor_network_parameters(log_dir, actor_net, step):
         weights_file.close()
 
 
-def restore_actor_network_parameters(actor_net, restore_dir):
+def restore_network_parameters(net, restore_dir):
     param_files = sorted(os.listdir(restore_dir), key=lambda index: int(index.split("_")[0]))
     network_parameters = []
     for i, file in enumerate(param_files):
-        param_val = np.loadtxt(os.path.join(restore_dir, file)).reshape(actor_net.trainable_variables[i].shape)
+        param_val = np.loadtxt(os.path.join(restore_dir, file)).reshape(net.trainable_variables[i].shape)
         network_parameters.append(param_val)
-    actor_net.set_weights(network_parameters)
+    net.set_weights(network_parameters)
 
