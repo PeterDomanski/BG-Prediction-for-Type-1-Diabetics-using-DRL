@@ -82,7 +82,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
             actor_optimizer=tf.keras.optimizers.Adam(learning_rate=5e-4),
             critic_optimizer=tf.keras.optimizers.Adam(learning_rate=5e-4),
             alpha_optimizer=tf.keras.optimizers.Adam(learning_rate=5e-4),
-            target_update_period=100,
+            target_update_period=10,
             target_update_tau=0.005,
             gamma=1.0,
             reward_scale_factor=1.0,

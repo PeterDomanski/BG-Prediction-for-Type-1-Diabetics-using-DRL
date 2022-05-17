@@ -1,3 +1,4 @@
+import random
 import gym
 import numpy as np
 import tensorflow as tf
@@ -352,24 +353,42 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
     def __init__(self, ts_data, rl_algorithm, data_summary, initial_state_val=0.0, pred_horizon=6, window_size=6,
                  max_window_count=-1, min_attribute_val=35.0, max_attribute_val=500.0, batch_size=1,
                  use_rnn_state=True, state_size=2*256, use_pred_diff=True, evaluation=False, state_type="skipping",
-                 dtype=tf.float32,
-                 scope='TFEnviroment'):
+                 dtype=tf.float32, scope='TFEnviroment', multi_task=False):
         if len(data_summary) > 0:
-            if data_summary['normalization_type'] == 'min_max':
-                min_attribute_val = 0.0
-                max_attribute_val = 1.0
-            elif data_summary['normalization_type'] == 'mean':
-                min_attribute_val = (data_summary['min'] - data_summary['mean']) / (
-                        data_summary['max'] - data_summary['min'])
-                max_attribute_val = (data_summary['max'] - data_summary['mean']) / (
-                        data_summary['max'] - data_summary['min'])
-            elif data_summary['normalization_type'] == 'z_score':
-                min_attribute_val = (data_summary['min'] - data_summary['mean']) / data_summary['std']
-                max_attribute_val = (data_summary['max'] - data_summary['mean']) / data_summary['std']
+            if multi_task:
+                if data_summary['normalization_type'] == 'min_max':
+                    min_attribute_val = (min_attribute_val - data_summary['min']) / (
+                            data_summary['max'] - data_summary['min'])
+                    max_attribute_val = (max_attribute_val - data_summary['min']) / (
+                            data_summary['max'] - data_summary['min'])
+                elif data_summary['normalization_type'] == 'mean':
+                    min_attribute_val = (min_attribute_val - data_summary['mean']) / (
+                            data_summary['max'] - data_summary['min'])
+                    max_attribute_val = (max_attribute_val - data_summary['mean']) / (
+                            data_summary['max'] - data_summary['min'])
+                elif data_summary['normalization_type'] == 'z_score':
+                    min_attribute_val = (min_attribute_val - data_summary['mean']) / data_summary['std']
+                    max_attribute_val = (max_attribute_val - data_summary['mean']) / data_summary['std']
+            else:
+                if data_summary['normalization_type'] == 'min_max':
+                    min_attribute_val = 0.0
+                    max_attribute_val = 1.0
+                elif data_summary['normalization_type'] == 'mean':
+                    min_attribute_val = (data_summary['min'] - data_summary['mean']) / (
+                            data_summary['max'] - data_summary['min'])
+                    max_attribute_val = (data_summary['max'] - data_summary['mean']) / (
+                            data_summary['max'] - data_summary['min'])
+                elif data_summary['normalization_type'] == 'z_score':
+                    min_attribute_val = (data_summary['min'] - data_summary['mean']) / data_summary['std']
+                    max_attribute_val = (data_summary['max'] - data_summary['mean']) / data_summary['std']
         self._dtype = dtype
         self._scope = scope
         self._batch_size = batch_size
+        self.multi_task = multi_task
         self.ts_data = ts_data
+        if multi_task:
+            self.ts_patients_data = ts_data
+            self.set_patient_dataset(0)
         self.evaluation = evaluation
         self.window_size = window_size
         self.max_window_count = max_window_count
@@ -429,6 +448,9 @@ class TsForecastingMultiStepTFEnv(tf_environment.TFEnvironment):
         self._reward = common.create_variable('reward', 0, dtype=dtype)
         self._steps = common.create_variable('steps', 0)
         self._resets = common.create_variable('resets', 0)
+
+    def set_patient_dataset(self, ds_index):
+        self.ts_data = self.ts_patients_data[ds_index]
 
     def _current_time_step(self):
         def first():

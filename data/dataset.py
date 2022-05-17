@@ -20,6 +20,32 @@ def load_csv_dataset(path_to_data):
     return pandas_ds.iloc[:, -1].astype(np.float32), total_time
 
 
+def data_normalization_multi_patient(data_train, data_test, normalization_type):
+    min_val, max_val = float("inf"), float("-inf")
+    mean_val, std_val = [], []
+    for ds in data_train:
+        if ds.min() < min_val:
+            min_val = ds.min()
+        if ds.max() > max_val:
+            max_val = ds.max()
+        mean_val.append(ds.mean())
+        std_val.append(ds.std())
+    data_summary = {"min": min_val, "max": max_val, "mean": np.mean(mean_val), "std": np.mean(std_val),
+                    "normalization_type": normalization_type}
+    normalized_train_data, normalized_test_data = [], []
+    for i, _ in enumerate(data_train):
+        if normalization_type == "min_max":
+            normalized_train_data.append((data_train[i] - min_val) / (max_val - min_val))
+            normalized_test_data.append((data_test[i] - min_val) / (max_val - min_val))
+        elif normalization_type == "mean":
+            normalized_train_data.append((data_train[i] - data_summary['mean']) / (max_val - min_val))
+            normalized_test_data.append((data_test[i] - data_summary['mean']) / (max_val - min_val))
+        elif normalization_type == "z_score":
+            normalized_train_data.append((data_train[i] - data_summary['mean']) / data_summary['std'])
+            normalized_test_data.append((data_test[i] - data_summary['mean']) / data_summary['std'])
+    return normalized_train_data, normalized_test_data, data_summary
+
+
 def data_normalization(data_frame_train, data_frame_test, normalization_type):
     data_frame = pandas.concat([data_frame_train, data_frame_test])
     min_attribute_value = data_frame.min()

@@ -5,6 +5,7 @@ from rl import environment, rl_agent
 import training
 import tensorflow as tf
 import datetime
+import os
 
 
 gpus = tf.config.list_physical_devices('GPU')
@@ -26,29 +27,55 @@ def main(args):
 
 @gin.configurable
 def run(path_to_train_data="", path_to_eval_data="", normalization=False, normalization_type="min_max",
-        setup="single_step", rl_algorithm="ddpg", env_implementation="tf", use_gpu=False):
+        setup="single_step", rl_algorithm="ddpg", env_implementation="tf", use_gpu=False, multi_task=False):
     # logging
     log_dir = "./logs/" + "log" + datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     file_writer = tf.summary.create_file_writer(log_dir)
     logging.get_absl_handler().use_absl_log_file(program_name="log", log_dir=log_dir)
     # load data set
-    ts_train_data, total_train_time_h = dataset.load_csv_dataset(path_to_train_data)
+    if multi_task:
+        dataset_files = sorted(os.listdir(path_to_train_data), key=lambda index: int(index.split("-")[0]))
+        patients_train_datasets = []
+        patient_train_total_times = []
+        for f in dataset_files:
+            ts_train_data_sp, total_train_time_h = dataset.load_csv_dataset(os.path.join(path_to_train_data, f))
+            patients_train_datasets.append(ts_train_data_sp)
+            patient_train_total_times.append(total_train_time_h)
+        ts_train_data = patients_train_datasets
+        total_train_time_h = int((len(ts_train_data) * 5) / 60) + 1
+    else:
+        ts_train_data, total_train_time_h = dataset.load_csv_dataset(path_to_train_data)
     if path_to_eval_data != "":
-        ts_eval_data, total_eval_time_h = dataset.load_csv_dataset(path_to_eval_data)
+        if multi_task:
+            dataset_files = sorted(os.listdir(path_to_eval_data), key=lambda index: int(index.split("-")[0]))
+            patients_eval_datasets = []
+            patient_eval_total_times = []
+            for f in dataset_files:
+                ts_eval_data_sp, total_eval_time_h = dataset.load_csv_dataset(os.path.join(path_to_eval_data, f))
+                patients_eval_datasets.append(ts_eval_data_sp)
+                patient_eval_total_times.append(total_eval_time_h)
+            ts_eval_data = patients_eval_datasets
+            total_eval_time_h = int((len(ts_eval_data) * 5) / 60) + 1
+        else:
+            ts_eval_data, total_eval_time_h = dataset.load_csv_dataset(path_to_eval_data)
     else:
         ts_eval_data = ts_train_data
         total_eval_time_h = total_train_time_h
     if normalization:
-        ts_train_data, ts_eval_data, data_summary = dataset.data_normalization(ts_train_data, ts_eval_data,
-                                                                               normalization_type=normalization_type)
+        if multi_task:
+            ts_train_data, ts_eval_data, data_summary = dataset.data_normalization_multi_patient(
+                ts_train_data, ts_eval_data, normalization_type=normalization_type)
+        else:
+            ts_train_data, ts_eval_data, data_summary = dataset.data_normalization(
+                ts_train_data, ts_eval_data, normalization_type=normalization_type)
     else:
         data_summary = {}
     # create environment
     if setup == "single_step":
         if env_implementation == "tf":
             train_env = environment.TsForecastingSingleStepTFEnv(ts_train_data, rl_algorithm, data_summary)
-            train_env_eval = environment.TsForecastingSingleStepTFEnv(ts_train_data, rl_algorithm, data_summary,
-                                                                      evaluation=True, max_window_count=-1)
+            train_env_eval = environment.TsForecastingSingleStepTFEnv(
+                ts_train_data, rl_algorithm, data_summary, evaluation=True, max_window_count=-1)
         else:
             train_env = environment.TsForecastingSingleStepEnv(ts_train_data, rl_algorithm=rl_algorithm)
             train_env_eval = environment.TsForecastingSingleStepEnv(
@@ -60,51 +87,57 @@ def run(path_to_train_data="", path_to_eval_data="", normalization=False, normal
             max_attribute_val = train_env.max_attribute_val
         if path_to_eval_data != "":
             if env_implementation == "tf":
-                eval_env = environment.TsForecastingSingleStepTFEnv(ts_eval_data, rl_algorithm, data_summary,
-                                                                    evaluation=True, max_window_count=-1)
+                eval_env = environment.TsForecastingSingleStepTFEnv(
+                    ts_eval_data, rl_algorithm, data_summary, evaluation=True, max_window_count=-1)
                 eval_env_train = environment.TsForecastingSingleStepTFEnv(ts_eval_data, rl_algorithm, data_summary)
             else:
-                eval_env = environment.TsForecastingSingleStepEnv(ts_eval_data, evaluation=True,
-                                                                  rl_algorithm=rl_algorithm, max_window_count=-1)
+                eval_env = environment.TsForecastingSingleStepEnv(
+                    ts_eval_data, evaluation=True, rl_algorithm=rl_algorithm, max_window_count=-1)
                 eval_env_train = environment.TsForecastingSingleStepEnv(ts_eval_data, rl_algorithm=rl_algorithm)
         else:
             if env_implementation == "tf":
-                eval_env = environment.TsForecastingSingleStepTFEnv(ts_train_data, rl_algorithm, data_summary,
-                                                                    evaluation=True, max_window_count=-1)
+                eval_env = environment.TsForecastingSingleStepTFEnv(
+                    ts_train_data, rl_algorithm, data_summary, evaluation=True, max_window_count=-1)
                 eval_env_train = environment.TsForecastingSingleStepTFEnv(ts_train_data, rl_algorithm, data_summary)
             else:
-                eval_env = environment.TsForecastingSingleStepEnv(ts_train_data, evaluation=True,
-                                                                  rl_algorithm=rl_algorithm, max_window_count=-1)
+                eval_env = environment.TsForecastingSingleStepEnv(
+                    ts_train_data, evaluation=True, rl_algorithm=rl_algorithm, max_window_count=-1)
                 eval_env_train = environment.TsForecastingSingleStepEnv(ts_train_data, rl_algorithm)
         forecasting_steps = 1
         num_iter = train_env.max_window_count
     elif setup == "multi_step":
         if env_implementation == "tf":
-            train_env = environment.TsForecastingMultiStepTFEnv(ts_train_data, rl_algorithm, data_summary)
-            train_env_eval = environment.TsForecastingMultiStepTFEnv(ts_train_data, rl_algorithm, data_summary,
-                                                                     evaluation=True, max_window_count=-1)
+            train_env = environment.TsForecastingMultiStepTFEnv(
+                ts_train_data, rl_algorithm, data_summary, multi_task=multi_task)
+            train_env_eval = environment.TsForecastingMultiStepTFEnv(
+                ts_train_data, rl_algorithm, data_summary, multi_task=multi_task,
+                evaluation=True, max_window_count=-1)
         else:
             train_env = environment.TsForecastingMultiStepEnv(ts_train_data, rl_algorithm)
-            train_env_eval = environment.TsForecastingMultiStepEnv(ts_train_data, rl_algorithm, evaluation=True,
-                                                                   max_window_count=-1)
+            train_env_eval = environment.TsForecastingMultiStepEnv(
+                ts_train_data, rl_algorithm, evaluation=True, max_window_count=-1)
         if normalization:
             max_attribute_val = dataset.undo_data_normalization_sample_wise(train_env.max_attribute_val, data_summary)
         else:
             max_attribute_val = train_env.max_attribute_val
         if path_to_eval_data != "":
             if env_implementation == "tf":
-                eval_env = environment.TsForecastingMultiStepTFEnv(ts_eval_data, rl_algorithm, data_summary,
-                                                                   evaluation=True, max_window_count=-1)
-                eval_env_train = environment.TsForecastingMultiStepTFEnv(ts_eval_data, rl_algorithm, data_summary)
+                eval_env = environment.TsForecastingMultiStepTFEnv(
+                    ts_eval_data, rl_algorithm, data_summary, evaluation=True, max_window_count=-1,
+                    multi_task=multi_task)
+                eval_env_train = environment.TsForecastingMultiStepTFEnv(
+                    ts_eval_data, rl_algorithm, data_summary, multi_task=multi_task)
             else:
                 eval_env = environment.TsForecastingMultiStepEnv(ts_eval_data, rl_algorithm,
                                                                  evaluation=True, max_window_count=-1)
                 eval_env_train = environment.TsForecastingMultiStepEnv(ts_eval_data, rl_algorithm)
         else:
             if env_implementation == "tf":
-                eval_env = environment.TsForecastingMultiStepTFEnv(ts_train_data, rl_algorithm, data_summary,
-                                                                   evaluation=True, max_window_count=-1)
-                eval_env_train = environment.TsForecastingMultiStepTFEnv(ts_train_data, rl_algorithm, data_summary)
+                eval_env = environment.TsForecastingMultiStepTFEnv(
+                    ts_train_data, rl_algorithm, data_summary, evaluation=True, max_window_count=-1,
+                    multi_task=multi_task)
+                eval_env_train = environment.TsForecastingMultiStepTFEnv(
+                    ts_train_data, rl_algorithm, data_summary, multi_task=multi_task)
             else:
                 eval_env = environment.TsForecastingMultiStepEnv(ts_train_data, rl_algorithm, evaluation=True,
                                                                  max_window_count=-1)
@@ -135,7 +168,7 @@ def run(path_to_train_data="", path_to_eval_data="", normalization=False, normal
     training.rl_training_loop(log_dir, tf_train_env, tf_train_env_eval, tf_eval_env, tf_eval_env_train, agent,
                               ts_train_data, ts_eval_data, file_writer, setup, forecasting_steps, rl_algorithm,
                               total_train_time_h, total_eval_time_h, max_attribute_val, num_iter, data_summary,
-                              env_implementation)
+                              env_implementation, multi_task)
     # save gin's operative config to a file after training
     config_txt_file = open(log_dir + "/gin_config.txt", "a")
     config_txt_file.write("\n")
