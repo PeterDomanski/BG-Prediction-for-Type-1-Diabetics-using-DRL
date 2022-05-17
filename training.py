@@ -228,6 +228,7 @@ def save_network_parameters(log_dir, net, net_name=""):
         # weights_file.close()
 
 
+@gin.configurable
 def restore_network_parameters(net, restore_dir, layers_to_train="last"):
     param_files = sorted(os.listdir(restore_dir), key=lambda index: int(index.split("_")[0]))
     network_parameters = []

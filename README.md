@@ -27,6 +27,11 @@ Here is an overview of the proposed methodology:
     - env_implementation [str]: sepcify environment implementation to use
         Options: tf, gym
     - use_gpu [bool]: Specify to explictily use a GPU 
+    - multi_task [bool]: If True multi-task setup (training on multiple patients simultaneously)
+    - restore_dir [str]: path to directory that includes weight and bias files to restore networks 
+        (no restoring if empty str) 
+    - layers_to_train [atr]: if multi-task with resotring this str specifies which layers to train:
+        Options: last, dec_last, lstm_dec_last
 
 ### Stand-alone scripts
 1) metric_eval_csv.py
