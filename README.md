@@ -46,10 +46,25 @@ Here is an overview of the proposed methodology:
    - It has the following configuration parameters (arguments of the python call)
      - csv_path [str]: path to csv data set
      - setup [str]: 'single_step' or 'multi_step' scenario
+     - vis_type [str]: different types of plots ('vis_eval_samples', 'vis_avg_training', 'vis_avg_forecasting')
+     - vis_steps [int]: number of steps to visualize (multiple of eval freq, e.g. vis_steps * 500)
+     - vis_std [bool]: if True visualize std otherwise visualize variance
+     - vis_forecasting_error [bool]: if True additionally visualize forecasting error
+     - error_metric [str]: metric to visualize if vis_forecasting_error is True
+     - y_lim [int]: limit of y-axis for vis_avg_forecasting
+     - dataset_path [str]: path to (training) dataset to visualize windows with min. / max. error
      - save_fig [str]: "True" or "False"
      - save_path [str]: path to store figure
    - Thus, a call of the script can look the following (including all arguments) <br/>
    ``` python uq_visualization.py --csv_path="." --setup="multi_step" --save_fig="True", --save_path="."```
+
+### Run in Google colab
+- main.py: change path to config.gin (absolute path -> '/content/rl_time_series_forecasting/config.gin')
+- config.gin: change path to datasets (absolute path e.g. '/content/rl_time_series_forecasting/data/540-ws-training.csv')
+- Jupyter notebook code
+  - ``` !pip install tf-agents```
+  - ``` !python /content/rl_time_series_forecasting/main.py```
+![Alt text](./images/colab.png?raw=true "Google Colab")
 
 ### Visualization in Tensorboard
 Navigate to logging directory of interest and type  (in the terminal)

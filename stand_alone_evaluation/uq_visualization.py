@@ -11,7 +11,7 @@ argparser.add_argument("--csv_path", dest="csv_path",
                        default="/home/domanspr/rl_time_series_forecasting/logs/multi_step/log2022-05-02_16-44-26/data_summaries/performance_summary_35000_eval.csv")
 argparser.add_argument("--setup", dest="setup", default="multi_step")
 # vis_eval_samples, vis_avg_training, vis_avg_forecasting
-# Note: pass path to dir for vis_avg_training otherwise pass explicit file
+# Note: pass path to dir for vis_avg_training otherwise pass explicit file (in csv_path argument)
 argparser.add_argument("--vis_type", dest="vis_type", default="vis_avg_forecasting")
 argparser.add_argument("--vis_steps", dest="vis_steps", default=80)
 argparser.add_argument("--vis_std", dest="vis_std", default=True)
