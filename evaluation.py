@@ -179,7 +179,7 @@ def compute_metrics_multi_step(env, policy, env_implementation, data_summary, ts
                 episode_rmse += tf.math.reduce_mean(episode_rmse_val)
                 parameter_values['rmse'] = tf.squeeze(tf.math.sqrt(episode_rmse_val)).numpy()
 
-            if prefix == "eval":
+            if "eval" in prefix:
                 action_distribution = policy.distribution(time_step, rnn_state)[0]
                 if len(data_summary) == 0:
                     action_mean = action_distribution.mean()

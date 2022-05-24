@@ -16,11 +16,11 @@ run.env_implementation = "tf"
 run.use_gpu = False
 run.multi_task = True
 
-rl_training_loop.max_train_steps = 2500
+rl_training_loop.max_train_steps = 2
 rl_training_loop.eval_interval = 1
 rl_training_loop.preheat_phase = False
 # e.g. /home/domanspr/rl_time_series_forecasting/logs/log2022-04-28_21-31-39/w&b; "" if no restoring
-rl_training_loop.restore_dir = "/home/domanspr/rl_time_series_forecasting/logs/log2022-05-16_21-57-19/w&b"
+rl_training_loop.restore_dir = ""
 
 # last, dec_last, lstm_dec_last
 restore_network_parameters.layers_to_train = "last"
