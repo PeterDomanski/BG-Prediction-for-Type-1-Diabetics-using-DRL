@@ -20,22 +20,26 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
 
     if rl_algorithm == "ddpg":
         with strategy.scope():
-            actor_net = actor_rnn_network.ActorRnnNetwork(observation_spec,
-                                                          action_spec,
-                                                          input_fc_layer_params=(256, 256),
-                                                          lstm_size=(64, ),
-                                                          output_fc_layer_params=(256, 256),
-                                                          activation_fn=tf.keras.activations.relu)
-            critic_net = critic_rnn_network.CriticRnnNetwork((observation_spec, action_spec),
-                                                             lstm_size=(64, ),
-                                                             observation_fc_layer_params=(256, 256),
-                                                             action_fc_layer_params=(128,),
-                                                             joint_fc_layer_params=(256, 256),
-                                                             output_fc_layer_params=(256, 256),
-                                                             activation_fn=tf.keras.activations.relu,
-                                                             kernel_initializer='glorot_uniform',
-                                                             last_kernel_initializer='glorot_uniform'
-                                                             )
+            actor_net = actor_rnn_network.ActorRnnNetwork(
+                observation_spec,
+                action_spec,
+                input_fc_layer_params=(256, 256),
+                lstm_size=(64, ),
+                output_fc_layer_params=(256, 256),
+                activation_fn=tf.keras.activations.relu
+            )
+            critic_net = critic_rnn_network.CriticRnnNetwork(
+                (observation_spec, action_spec),
+                lstm_size=(64, ),
+                observation_fc_layer_params=(256, 256),
+                action_fc_layer_params=(128,),
+                joint_fc_layer_params=(256, 256),
+                output_fc_layer_params=(256, 256),
+                activation_fn=tf.keras.activations.relu,
+                kernel_initializer='glorot_uniform',
+                last_kernel_initializer='glorot_uniform'
+            )
+
             train_step = train_utils.create_train_step()
 
         agent = ddpg_agent.DdpgAgent(
@@ -71,6 +75,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
                 activation_fn=tf.keras.activations.relu,
                 continuous_projection_net=tanh_normal_projection_network.TanhNormalProjectionNetwork
             )
+
             train_step = train_utils.create_train_step()
 
         agent = sac_agent.SacAgent(
@@ -106,6 +111,7 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
                 output_fc_layer_params=(256, 256),
                 activation_fn=tf.keras.activations.relu
             )
+
             train_step = train_utils.create_train_step()
 
         agent = ppo_agent.PPOAgent(
@@ -126,7 +132,9 @@ def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):
                 output_fc_layer_params=(256, 256),
                 activation_fn=tf.keras.activations.relu,
             )
+
             train_step = train_utils.create_train_step()
+
         agent = dqn_agent.DqnAgent(
             time_step_spec,
             action_spec,
