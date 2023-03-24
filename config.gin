@@ -1,19 +1,20 @@
+# ------------------------------------------------ General settings ----------------------------------------------------
+
 # Debug data: ./data/RasberryPi.csv
-# Ohio data: /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-training.csv
+# Ohio data, e.g., path_to_dir/540-ws-training.csv
 # Note: Specify path to directory (that include training .csv files) for multi_task=True
-run.path_to_train_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/patient_generalization"
+run.path_to_train_data = "./data/RasberryPi.csv"
 # if path to eval data empty only training data is used
-# Ohio data: /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing.csv
-# /home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/540-ws-testing_100.csv
+# Ohio data, e.g., path_to_dir/540-ws-testing.csv
 # Note: Specify path to directory (that include testing .csv files) for multi_task=True
-run.path_to_eval_data = "/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/patient_generalization_eval"
+run.path_to_eval_data = ""
 run.normalization = True
 # min_max, mean, z_score
 run.normalization_type = "z_score"
 run.setup = "multi_step"
 run.rl_algorithm = "sac"
 run.env_implementation = "tf"
-run.use_gpu = False
+run.use_gpu = True
 run.multi_task = True
 
 rl_training_loop.max_train_steps = 2
@@ -22,11 +23,10 @@ rl_training_loop.preheat_phase = False
 # e.g. /home/domanspr/rl_time_series_forecasting/logs/log2022-04-28_21-31-39/w&b; "" if no restoring
 rl_training_loop.restore_dir = ""
 
-# last, dec_last, lstm_dec_last
+# last, dec_last, lstm_dec_last (dec = decoder)
 restore_network_parameters.layers_to_train = "last"
 
-# ----------------------------------------------------------------------------------------------------------------------
-# single step forecasting
+# ------------------------------------------- Single Step Forecasting --------------------------------------------------
 
 # gym environment implementation
 TsForecastingSingleStepEnv.window_size = 5
@@ -46,9 +46,9 @@ TsForecastingSingleStepTFEnv.max_window_count = 16
 TsForecastingSingleStepTFEnv.batch_size = 1
 # skipping, no_skipping, single_step_shift
 TsForecastingSingleStepTFEnv.state_type = "skipping"
-# ----------------------------------------------------------------------------------------------------------------------
 
-# multi step forecasting
+# -------------------------------------------- Multi Step Forecasting --------------------------------------------------
+
 TsForecastingMultiStepEnv.window_size = 12
 TsForecastingMultiStepEnv.forecasting_steps = 5
 # CGM: min 35.0, max 500.0 (note: dqn -> min 0.0)
@@ -68,7 +68,3 @@ TsForecastingMultiStepTFEnv.max_window_count = 16
 TsForecastingMultiStepTFEnv.batch_size = 1
 # skipping, no_skipping, single_step_shift
 TsForecastingMultiStepTFEnv.state_type = "skipping"
-
-
-
-
