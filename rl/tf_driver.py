@@ -12,7 +12,6 @@ class TrainingDriver:
         self.num_iterations = num_iterations
         self.use_rnn_state = use_rnn_state
         self.env = env
-        # self.time_step = self.env.reset()
         self.replay_buffer = replay_buffer
         self.dataset = self.replay_buffer.as_dataset(sample_batch_size=batch_size, single_deterministic_pass=False)
         self.iterator = iter(self.dataset)
@@ -24,7 +23,6 @@ class TrainingDriver:
         else:
             self.policy = policy
         self.policy_state = self.policy.get_initial_state(1)
-        # self.step = common.create_variable("step", 0, dtype=tf.int64)
         self.step = 0
 
     # tf.function
@@ -41,7 +39,6 @@ class TrainingDriver:
         self.replay_buffer.add_batch(traj)
         return traj
 
-    # TODO: use @tf.function
     def train_step(self):
         for _ in range(self.num_iterations):
             self.collect_step()
