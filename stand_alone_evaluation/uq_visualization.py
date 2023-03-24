@@ -133,8 +133,6 @@ def visualize_avg_var_training(data_frame, setup, step, show_forecasting_error, 
         all_max_vals = np.array(all_max_vals)
         if show_forecasting_error:
             all_error_data = np.array(all_error_data)
-            # all_min_error_vals = np.array(all_min_error_vals)
-            # all_max_error_vals = np.array(all_max_error_vals)
         fig, ax = plt.subplots(figsize=(30, 15))
         if vis_std:
             all_var_data = np.sqrt(all_var_data)
