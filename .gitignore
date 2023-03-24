@@ -1,2 +1,7 @@
 # Ignore folders
 logs/
+
+# ignore python cache
+__pycache__/
+# ignore python idea files
+.idea/
