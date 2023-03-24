@@ -76,7 +76,7 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
         logging.info("Start training iteration {}".format(i))
         if i % eval_interval == 0:
             # compute average return on train data
-            avg_return_train = evaluation.compute_avg_return(train_env, agent.policy, env_implementation, data_summary)
+            avg_return_train = evaluation.compute_avg_return(train_env, agent.policy, env_implementation)
             # compute average return on eval data
             if multi_task:
                 if env_implementation == "tf":
@@ -84,15 +84,14 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
                     for p in range(12):
                         eval_env_train.set_patient_dataset(p)
                         avg_return_eval = evaluation.compute_avg_return(
-                            eval_env_train, agent.policy, env_implementation, data_summary)
+                            eval_env_train, agent.policy, env_implementation)
                         avg_patient_return.append(avg_return_eval)
                     avg_return_eval = np.mean(avg_patient_return)
                     eval_env_train.set_patient_dataset(ds_index)
                 else:
                     logging.info("Patient generalization only implemented for tf environments")
             else:
-                avg_return_eval = evaluation.compute_avg_return(eval_env_train, agent.policy, env_implementation,
-                                                                data_summary)
+                avg_return_eval = evaluation.compute_avg_return(eval_env_train, agent.policy, env_implementation)
             with file_writer.as_default():
                 tf.summary.scalar("Average Return (Training)", avg_return_train, i)
                 tf.summary.scalar("Average Return (Evaluation)", avg_return_eval, i)

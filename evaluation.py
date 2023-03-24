@@ -5,7 +5,7 @@ from data import dataset
 from absl import logging
 
 
-def compute_avg_return(env, policy, env_implementation, data_summary, num_iter=16, normalize=False, use_rnn_state=True):
+def compute_avg_return(env, policy, env_implementation, num_iter=16, normalize=False, use_rnn_state=True):
     total_return = 0.0
     for _ in range(num_iter):
         time_step = env.reset()
@@ -22,10 +22,7 @@ def compute_avg_return(env, policy, env_implementation, data_summary, num_iter=1
                     time_step = env.step(action_step)
             else:
                 time_step = env.step(action_step)
-            # if len(data_summary) == 0:
-            #     episode_return += time_step.reward
-            # else:
-            #     episode_return += dataset.undo_data_normalization_sample_wise(time_step.reward, data_summary)
+
             episode_return += time_step.reward
             time_series_counter += 1
 
@@ -143,7 +140,6 @@ def compute_metrics_multi_step(env, policy, env_implementation, data_summary, ts
             parameter_values = {}
             step_counter += 1
             action_step, rnn_state, _ = policy.action(time_step, rnn_state)
-            # ground_truth = env._current_ground_truth
             ground_truth_pos = int(tf.squeeze(env._current_data_pos))
             if use_rnn_state:
                 if env_implementation == "tf":
@@ -155,13 +151,9 @@ def compute_metrics_multi_step(env, policy, env_implementation, data_summary, ts
             # agent forecast
             if len(data_summary) == 0:
                 agent_pred = tf.squeeze(action_step)
-                # ground_truth_pos = int(tf.squeeze(time_step.reward))
-                # ground_truth = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
                 ground_truth = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
             else:
                 agent_pred = dataset.undo_data_normalization_sample_wise(tf.squeeze(action_step), data_summary)
-                # ground_truth_pos = int(tf.squeeze(time_step.reward))
-                # ground_truth = ts_data[ground_truth_pos - pred_horizon:ground_truth_pos]
                 ground_truth = ts_data[ground_truth_pos:ground_truth_pos + pred_horizon]
                 ground_truth = dataset.undo_data_normalization_sample_wise(ground_truth, data_summary)
             parameter_values['ground_truth'] = ground_truth.values
