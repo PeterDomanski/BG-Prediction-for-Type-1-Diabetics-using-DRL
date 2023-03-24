@@ -6,23 +6,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
-argparser = argparse.ArgumentParser()
-argparser.add_argument("--csv_path", dest="csv_path",
-                       default="/home/domanspr/rl_time_series_forecasting/logs/multi_step/log2022-05-02_16-44-26/data_summaries/performance_summary_35000_eval.csv")
-argparser.add_argument("--setup", dest="setup", default="multi_step")
+arg_parser = argparse.ArgumentParser()
+arg_parser.add_argument("--csv_path", dest="csv_path", default=".")
+arg_parser.add_argument("--setup", dest="setup", default="multi_step")
 # vis_eval_samples, vis_avg_training, vis_avg_forecasting
 # Note: pass path to dir for vis_avg_training otherwise pass explicit file (in csv_path argument)
-argparser.add_argument("--vis_type", dest="vis_type", default="vis_avg_forecasting")
-argparser.add_argument("--vis_steps", dest="vis_steps", default=80)
-argparser.add_argument("--vis_std", dest="vis_std", default=True)
-argparser.add_argument("--vis_forecasting_error", dest="vis_forecasting_error", default=True)
-argparser.add_argument("--error_metric", dest="error_metric", default="mae")
-argparser.add_argument("--y_lim", dest="y_lim", default=25)
-argparser.add_argument("--dataset_path", dest="dataset_path",
-                       default="/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting/datasets/OhioT1DM/570-ws-testing.csv")
-argparser.add_argument("--save_fig", dest="save_fig", default=False)
-argparser.add_argument("--save_path", dest="save_path", default="/home/domanspr/Documents/Duke/projects/RL_for_time_series_forecasting")
-args = argparser.parse_args()
+arg_parser.add_argument("--vis_type", dest="vis_type", default="vis_avg_forecasting")
+arg_parser.add_argument("--vis_steps", dest="vis_steps", default=80)
+arg_parser.add_argument("--vis_std", dest="vis_std", default=True)
+arg_parser.add_argument("--vis_forecasting_error", dest="vis_forecasting_error", default=True)
+arg_parser.add_argument("--error_metric", dest="error_metric", default="mae")
+arg_parser.add_argument("--y_lim", dest="y_lim", default=25)
+arg_parser.add_argument("--dataset_path", dest="dataset_path", default=".")
+arg_parser.add_argument("--save_fig", dest="save_fig", default=False)
+arg_parser.add_argument("--save_path", dest="save_path", default=".")
+args = arg_parser.parse_args()
 
 # ----------------------------------------- Global parameters (config) -------------------------------------------------
 csv_path = args.csv_path
@@ -158,11 +156,7 @@ def visualize_avg_var_training(data_frame, setup, step, show_forecasting_error, 
             ax2 = ax.twinx()
             ax2.set_ylabel('{} error'.format(error_metric), color='red')
             ax2.plot(step, all_error_data, color='red', label=error_metric, linewidth=3)
-            # ax2.plot(step, all_min_error_vals, color='red')
-            # ax2.plot(step, all_max_error_vals, color='red')
-            # ax2.fill_between(step, all_min_error_vals, all_max_error_vals, color='red', alpha=0.6)
             ax2.tick_params(axis='y', labelcolor='red')
-        # plt.legend()
         if save_fig:
             plt.savefig(save_path + "/uq_var_train_training.pdf", dpi=300)
         else:
@@ -186,10 +180,8 @@ def visualize_var_forecasting(data_frame, setup, step, y_max):
         max_var_data = np.max(var_data, axis=0)
         window_id_min_error, window_id_max_error = {}, {}
         for i in range(len(min_var_data)):
-            # if np.where(var_data == min_var_data[i])[0] not in window_id_min_error.values():
             window_id_min_error[str(i + 1)] = int(np.where(var_data == min_var_data[i])[0])
         for j in range(len(max_var_data)):
-            # if np.where(var_data == max_var_data[j])[0] not in window_id_max_error.values():
             window_id_max_error[str(j + 1)] = int(np.where(var_data == max_var_data[j])[0])
         var_data = np.mean(var_data, axis=0)
         num_x_values = len(var_data)
