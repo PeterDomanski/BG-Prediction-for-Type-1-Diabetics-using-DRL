@@ -1,8 +1,7 @@
-import pandas
-import numpy as np
 import random
+import pandas
 import argparse
-
+import numpy as np
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument("--csv_path", dest="csv_path", default="./")

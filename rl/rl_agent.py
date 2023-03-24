@@ -1,16 +1,15 @@
 import tensorflow as tf
-# import tf_agents
 from absl import logging
-from tf_agents.agents.ddpg import actor_rnn_network, critic_rnn_network, ddpg_agent
 from tf_agents.agents.sac import sac_agent
 from tf_agents.agents.ppo import ppo_agent
 from tf_agents.agents.dqn import dqn_agent
 from tf_agents.agents.td3 import td3_agent
-from tf_agents.agents.reinforce import reinforce_agent
-from tf_agents.networks import actor_distribution_rnn_network, value_rnn_network, q_rnn_network
-from tf_agents.agents.sac import tanh_normal_projection_network
-from tf_agents.train.utils import strategy_utils
 from tf_agents.train.utils import train_utils
+from tf_agents.train.utils import strategy_utils
+from tf_agents.agents.reinforce import reinforce_agent
+from tf_agents.agents.sac import tanh_normal_projection_network
+from tf_agents.agents.ddpg import actor_rnn_network, critic_rnn_network, ddpg_agent
+from tf_agents.networks import actor_distribution_rnn_network, value_rnn_network, q_rnn_network
 
 
 def get_rl_agent(train_env, rl_algorithm="ddpg", use_gpu=False):

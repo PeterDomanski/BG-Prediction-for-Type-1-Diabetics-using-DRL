@@ -1,10 +1,10 @@
+import os
 import pandas
+import datetime
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-import datetime
-import os
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument("--csv_path", dest="csv_path",

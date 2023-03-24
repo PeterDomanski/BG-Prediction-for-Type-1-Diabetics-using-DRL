@@ -1,17 +1,15 @@
-import random
+import gin
 import gym
 import numpy as np
 import tensorflow as tf
 from absl import logging
+from gym.spaces import Box
 from tf_agents import specs
 from tf_agents.utils import common
 from tf_agents.environments import tf_environment
 from tf_agents.trajectories import time_step as ts
 from tf_agents.environments.gym_wrapper import GymWrapper
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
-from gym.spaces import Box
-import gin
-
 
 FIRST = ts.StepType.FIRST
 MID = ts.StepType.MID

@@ -1,11 +1,11 @@
+import os
 import gin
-from absl import app, logging
-from data import dataset
-from rl import environment, rl_agent
+import datetime
 import training
 import tensorflow as tf
-import datetime
-import os
+from data import dataset
+from absl import app, logging
+from rl import environment, rl_agent
 
 
 gpus = tf.config.list_physical_devices('GPU')

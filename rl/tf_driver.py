@@ -1,8 +1,7 @@
 import tensorflow as tf
-from tf_agents.trajectories import trajectory
 from tf_agents.utils import common
+from tf_agents.trajectories import trajectory
 from tf_agents.policies import py_tf_eager_policy
-import numpy as np
 
 
 class TrainingDriver:

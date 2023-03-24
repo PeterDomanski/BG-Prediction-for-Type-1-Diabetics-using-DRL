@@ -1,14 +1,13 @@
-import logging
+import os
 import gin
+import logging
+import evaluation
+import numpy as np
+import visualization
+import tensorflow as tf
+from rl import tf_driver
 from tf_agents.replay_buffers import tf_uniform_replay_buffer
 from tf_agents.drivers import dynamic_step_driver, dynamic_episode_driver
-from tf_agents.policies import random_tf_policy
-from rl import tf_driver
-import tensorflow as tf
-import evaluation
-import visualization
-import numpy as np
-import os
 
 
 @gin.configurable

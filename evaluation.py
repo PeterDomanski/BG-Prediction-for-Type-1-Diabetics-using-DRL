@@ -1,8 +1,8 @@
+import os
+import csv
 import tensorflow as tf
 from data import dataset
 from absl import logging
-import csv
-import os
 
 
 def compute_avg_return(env, policy, env_implementation, data_summary, num_iter=16, normalize=False, use_rnn_state=True):
