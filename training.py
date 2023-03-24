@@ -20,7 +20,6 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
     # eval_env_train (eval env with standard reward definition) are for validation purposes
     on_policy_algorithms = ["reinforce", "ppo"]
     # replay buffer for data collection
-    # TODO: reverb replay buffer
     if rl_algorithm in on_policy_algorithms:
         replay_buffer = get_replay_buffer(agent, batch_size=1, max_buffer_length=2000)
     else:
@@ -38,7 +37,6 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
     else:
         if env_implementation == "tf":
             # num iter has to be the length of an episode for on-policy algorithms
-            # TODO: on-policy algorithm need episode driver
             collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128,
                                                       num_iterations=num_iter)
         else:
@@ -50,9 +48,7 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
 
     if rl_algorithm not in on_policy_algorithms:
         if preheat_phase:
-            # pre-training collection of experience with initial / random actor
-            # random_policy = random_tf_policy.RandomTFPolicy(train_env.time_step_spec(), train_env.action_spec())
-            # TODO: random policy only possible if we do not use RNN state
+            # pre-training collection of experience
             collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128)
             logging.info("Collect a few steps using collect_policy and save to the replay buffer before training")
             for _ in range(1000):
@@ -228,23 +224,29 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
 
 @gin.configurable
 def get_replay_buffer(agent, batch_size=128, max_buffer_length=2000):
-    return tf_uniform_replay_buffer.TFUniformReplayBuffer(data_spec=agent.collect_data_spec,
-                                                          batch_size=batch_size,
-                                                          max_length=max_buffer_length)
+    return tf_uniform_replay_buffer.TFUniformReplayBuffer(
+        data_spec=agent.collect_data_spec,
+        batch_size=batch_size,
+        max_length=max_buffer_length
+    )
 
 
 @gin.configurable
 def get_collect_driver(env, policy, observers, num_iter=128, driver_type="episode"):
     if driver_type == "step":
-        return dynamic_step_driver.DynamicStepDriver(env,
-                                                     policy,
-                                                     observers=observers,
-                                                     num_steps=num_iter)
+        return dynamic_step_driver.DynamicStepDriver(
+            env,
+            policy,
+            observers=observers,
+            num_steps=num_iter
+        )
     elif driver_type == "episode":
-        return dynamic_episode_driver.DynamicEpisodeDriver(env,
-                                                           policy,
-                                                           observers=observers,
-                                                           num_episodes=num_iter)
+        return dynamic_episode_driver.DynamicEpisodeDriver(
+            env,
+            policy,
+            observers=observers,
+            num_episodes=num_iter
+        )
 
 
 def save_network_parameters(log_dir, net, net_name="", last=False):
@@ -266,7 +268,6 @@ def save_network_parameters(log_dir, net, net_name="", last=False):
                     np.savetxt(weights_file, row)
             elif len(val.shape) == 1:
                 np.savetxt(weights_file, val)
-        # weights_file.close()
 
 
 @gin.configurable
