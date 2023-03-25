@@ -42,41 +42,41 @@ Install dependencies using the following command:
 #### Single step settings
     Gym environment settings 
     ------------------------------
-    - window_size [int]: Input window size
-    - min_attribute_val [float]: Minimum value of attribute, e.g., CGM
-    - max_attribute_val [float]: Maximum value of attribute, e.g., CGM
-    - reward_def [str]: Specify reward function to use    (options: abs_diff, linear, exponential)
-    - max_window_count [int]: Specify the maximum number of windows to use per training iteration
+    - window_size [int]: input window size
+    - min_attribute_val [float]: minimum value of attribute, e.g., CGM
+    - max_attribute_val [float]: maximum value of attribute, e.g., CGM
+    - reward_def [str]: specify reward function to use    (options: abs_diff, linear, exponential)
+    - max_window_count [int]: specify the maximum number of windows to use per training iteration
         Note: specify -1 if you want to use as much windows as possible with random starting point
 
 
      TF environment settings
     ------------------------------
-    - window_size [int]: Input window size
-    - min_attribute_val [float]: Minimum value of attribute, e.g., CGM
-    - max_attribute_val [float]: Maximum value of attribute, e.g., CGM
-    - max_window_count [int]: Specify the maximum number of windows to use per training iteration
-        Note: specify -1 if you want to use as much windows as possible with random starting point
-    - batch_size [int]: Specify batch size
-    - state_type [str]: Specify state type (options: skipping, no_skipping, single_step_shift)
-#### Multi step settings
-#### Gym environment settings
-    - window_size [int]: Input window size
-    - forecasting_steps [int]: Number of steps to forecast
-    - min_attribute_val [float]: Minimum value of attribute, e.g., CGM
-    - max_attribute_val [float]: Maximum value of attribute, e.g., CGM
-    - reward_def [str]: Specify reward function to use    (options: abs_diff, linear, exponential)
-    - max_window_count [int]: Specify the maximum number of windows to use per training iteration
-        Note: specify -1 if you want to use as much windows as possible with random starting point
-#### TF environment settings
-    - window_size [int]: Input window size
-    - pred_horizon [int]: Number of steps to forecast
-    - min_attribute_val [float]: specify minimum value of attribute, e.g., CGM
-    - max_attribute_val [float]: specify maximum value of attribute, e.g., CGM    
+    - window_size [int]: input window size
+    - min_attribute_val [float]: minimum value of attribute, e.g., CGM
+    - max_attribute_val [float]: maximum value of attribute, e.g., CGM
     - max_window_count [int]: specify the maximum number of windows to use per training iteration
         Note: specify -1 if you want to use as much windows as possible with random starting point
-    - batch_size [int]: Specify batch size
-    - state_type [str]: Specify state type (options: skipping, no_skipping, single_step_shift)
+    - batch_size [int]: specify batch size
+    - state_type [str]: specify state type (options: skipping, no_skipping, single_step_shift)
+#### Multi step settings
+#### Gym environment settings
+    - window_size [int]: input window size
+    - forecasting_steps [int]: number of steps to forecast
+    - min_attribute_val [float]: minimum value of attribute, e.g., CGM
+    - max_attribute_val [float]: maximum value of attribute, e.g., CGM
+    - reward_def [str]: Specify reward function to use    (options: abs_diff, linear, exponential)
+    - max_window_count [int]: specify the maximum number of windows to use per training iteration
+        Note: specify -1 if you want to use as much windows as possible with random starting point
+#### TF environment settings
+    - window_size [int]: input window size
+    - pred_horizon [int]: number of steps to forecast
+    - min_attribute_val [float]: minimum value of attribute, e.g., CGM
+    - max_attribute_val [float]: maximum value of attribute, e.g., CGM    
+    - max_window_count [int]: specify the maximum number of windows to use per training iteration
+        Note: specify -1 if you want to use as much windows as possible with random starting point
+    - batch_size [int]: specify batch size
+    - state_type [str]: specify state type (options: skipping, no_skipping, single_step_shift)
 
 ### Run in terminal
 Set configuration options in config.gin and run the following command in the terminal:
@@ -109,7 +109,7 @@ tensorboard --logdir /home/my_project/logs/my_log_dir
      - strategy [str]: 'consecutive' or 'random' samples
      - setup [str]: 'single_step' or 'multi_step' scenario
    - Thus, a call of the script can look the following (including all arguments) <br/>
-   ``` python metric_eval_csv.py --csv_path="." --metrics="mse,rmse" --indices="0,100" --strategy="consecutive" --setup="multi_step"```
+   ``` python metric_eval_csv.py --csv_path="./data.csv" --metrics="mse,rmse" --indices="0,100" --strategy="consecutive" --setup="multi_step"```
 2) uq_visualization.py
    - Script to visualize UQ (variance) samples of training iterations
    - Stand-alone script that can be called directly from the terminal, e.g. ```python uq_visualization.py```
@@ -126,7 +126,18 @@ tensorboard --logdir /home/my_project/logs/my_log_dir
      - save_fig [str]: "True" or "False"
      - save_path [str]: path to store figure
    - Thus, a call of the script can look the following (including all arguments) <br/>
-   ``` python uq_visualization.py --csv_path="." --setup="multi_step" --save_fig="True", --save_path="."```
+   ``` python uq_visualization.py --csv_path="./data.csv" --setup="multi_step" --save_fig="True", --save_path="."```
+3) seg_visualization.py
+   - Script to calculate and visualize the Surveillance Error Grid (SEG)
+   - Stand-alone script that can be called directly from the terminal, e.g. ```python seg_visualization.py```
+   - It has the following configuration parameters (arguments of the python call)
+     - csv_path [str]: path to csv data set
+     - img_path [str]: path to seg image (superimposed with prediction results)
+     - ph [int]: prediction horizon, e.g., 30 min
+     - patient [int]: patient id
+     - save_path [str]: path to store figure
+   - Thus, a call of the script can look the following (including all arguments) <br/>
+   ``` python uq_visualization.py --csv_path="./data.csv" --img_path="./seg.png" --ph=30, --patienth=570 --save_path="."```
 
 
 
