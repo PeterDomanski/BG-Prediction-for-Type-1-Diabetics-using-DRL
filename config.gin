@@ -15,11 +15,13 @@ run.setup = "multi_step"
 run.rl_algorithm = "sac"
 run.env_implementation = "tf"
 run.use_gpu = True
-run.multi_task = True
+run.multi_task = False
 
-rl_training_loop.max_train_steps = 2
-rl_training_loop.eval_interval = 1
-rl_training_loop.preheat_phase = False
+# -------------------------------------------- DRL training settings ---------------------------------------------------
+
+rl_training_loop.max_train_steps = 100000
+rl_training_loop.eval_interval = 1000
+rl_training_loop.pretraining_phase = False
 # e.g. /home/domanspr/rl_time_series_forecasting/logs/log2022-04-28_21-31-39/w&b; "" if no restoring
 rl_training_loop.restore_dir = ""
 
@@ -29,7 +31,7 @@ restore_network_parameters.layers_to_train = "last"
 # ------------------------------------------- Single Step Forecasting --------------------------------------------------
 
 # gym environment implementation
-TsForecastingSingleStepEnv.window_size = 5
+TsForecastingSingleStepEnv.window_size = 6
 # CGM: min 35.0, max 500.0 (note: dqn -> min 0.0)
 TsForecastingSingleStepEnv.min_attribute_val = 35.0
 TsForecastingSingleStepEnv.max_attribute_val = 500.0
@@ -38,19 +40,19 @@ TsForecastingSingleStepEnv.reward_def = "abs_diff"
 TsForecastingSingleStepEnv.max_window_count = 16
 
 # tensorflow environment implementation
-TsForecastingSingleStepTFEnv.window_size = 5
+TsForecastingSingleStepTFEnv.window_size = 6
 # default: min=35.0, max=500.0
 TsForecastingSingleStepTFEnv.min_attribute_val = 35.0
 TsForecastingSingleStepTFEnv.max_attribute_val = 500.0
 TsForecastingSingleStepTFEnv.max_window_count = 16
-TsForecastingSingleStepTFEnv.batch_size = 1
+TsForecastingSingleStepTFEnv.batch_size = 128
 # skipping, no_skipping, single_step_shift
 TsForecastingSingleStepTFEnv.state_type = "skipping"
 
 # -------------------------------------------- Multi Step Forecasting --------------------------------------------------
 
-TsForecastingMultiStepEnv.window_size = 12
-TsForecastingMultiStepEnv.forecasting_steps = 5
+TsForecastingMultiStepEnv.window_size = 6
+TsForecastingMultiStepEnv.forecasting_steps = 6
 # CGM: min 35.0, max 500.0 (note: dqn -> min 0.0)
 TsForecastingMultiStepEnv.min_attribute_val = 0.0
 TsForecastingMultiStepEnv.max_attribute_val = 5.0
