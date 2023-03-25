@@ -139,6 +139,8 @@ tensorboard --logdir /home/my_project/logs/my_log_dir
      - save_path [str]: path to store figure
    - Thus, a call of the script can look the following (including all arguments) <br/>
    ``` python uq_visualization.py --csv_path="./data.csv" --img_path="./seg.png" --ph=30, --patienth=570 --save_path="."```
+   - Example:
+   ![Alt text](./images/seg_30min_570.png?raw=true "SEG 30 min subject 570")
 
 
 
