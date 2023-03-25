@@ -14,7 +14,7 @@ from tf_agents.drivers import dynamic_step_driver, dynamic_episode_driver
 def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_train, agent, ts_train_data, ts_eval_data,
                      file_writer, setup, forecasting_steps, rl_algorithm, total_train_time_h, total_eval_time_h,
                      max_attribute_val, num_iter, data_summary, env_implementation, multi_task,
-                     max_train_steps=1000, eval_interval=100, multi_task_interval=1, preheat_phase=False,
+                     max_train_steps=1000, eval_interval=100, multi_task_interval=1, pretraining_phase=False,
                      restore_dir=""):
     # train_env_eval (train env with ground truth as reward) and
     # eval_env_train (eval env with standard reward definition) are for validation purposes
@@ -47,7 +47,7 @@ def rl_training_loop(log_dir, train_env, train_env_eval, eval_env, eval_env_trai
                                                 driver_type="episode")
 
     if rl_algorithm not in on_policy_algorithms:
-        if preheat_phase:
+        if pretraining_phase:
             # pre-training collection of experience
             collect_driver = tf_driver.TrainingDriver(agent, train_env, replay_buffer, rl_algorithm, batch_size=128)
             logging.info("Collect a few steps using collect_policy and save to the replay buffer before training")
