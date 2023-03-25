@@ -7,16 +7,16 @@ Here is an overview of the proposed methodology:
 ![Alt text](./images/overview.png?raw=true "Methodology")
 
 ### Dependencies
-    - Python 3.7.0
-    - Tensorflow 2.8.0
-    - Tensorboard 2.8.0
-    - Tensorflow Agents 0.12.0
-    - Gym 0.23.0
-    - Pandas 1.1.5
-    - Numpy 1.21.5
-    - Matplotlib 3.5.1
-    - Absl-py 1.0.0
-    - Gin-config 0.5.0
+    - python 3.7.0
+    - tensorflow 2.8.0
+    - tensorboard 2.8.0
+    - tf-gents 0.12.0
+    - gym 0.23.0
+    - pandas 1.1.5
+    - numpy 1.21.5
+    - matplotlib 3.5.1
+    - absl-py 1.0.0
+    - gin-config 0.5.0
 Install dependencies using the following command:
 ```pip install -r requirements.txt```
 
