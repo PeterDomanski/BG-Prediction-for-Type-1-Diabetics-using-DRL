@@ -8,6 +8,7 @@ argparser.add_argument("--csv_path", dest="csv_path", default=".")
 argparser.add_argument("--img_path", dest="img_path", default=".")
 argparser.add_argument("--ph", dest="ph", default=30)
 argparser.add_argument("--patient", dest="patient", default="")
+argparser.add_argument("--save_path", dest="save_path", default=".")
 args = argparser.parse_args()
 
 # ----------------------------------------- Global parameters (config) -------------------------------------------------
@@ -15,6 +16,7 @@ csv_path = args.csv_path
 img_path = args.img_path
 patient_id = args.patient
 prediction_horizon = args.ph
+save_path = args.save_path
 
 
 # -------------------------------------------- Function definitions ----------------------------------------------------
@@ -50,7 +52,7 @@ def plot_surveillance_error_grid(data_frame, img, subject_id):
     ax.set_xlabel("Measured Blood Glucose Values (ml/dl)")
     ax.set_ylabel("Predicted Blood Glucose Values (ml/dl)")
     plt.title("Surveillance Error Grid for Patient {} using DRL".format(subject_id))
-    plt.savefig("./seg_{}min_{}.pdf".format(prediction_horizon, subject_id), dpi=600)
+    plt.savefig("{}/seg_{}min_{}.pdf".format(save_path, prediction_horizon, subject_id), dpi=600)
 
 
 def calculate_seg_risks(data_frame):
