@@ -3,6 +3,7 @@
 Deep Reinforcement Learning-based framework for single- or multi-step ahead predictions of time series data, 
 e.g. (continuous) blood glucose values of type 1 diabetics. <br/>
 Here is an overview of the proposed methodology:
+
 ![Alt text](./images/overview.png?raw=true "Methodology")
 
 ### Dependencies
