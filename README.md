@@ -1,37 +1,102 @@
-# rl_time_series_forecasting
+# Blood Glucose Prediction for Type-1 Diabetics using Deep Reinforcement Learning
 
-This project is about developing an RL-based framework for single or multi step ahead prediciton of time series data <br/>
+Deep Reinforcement Learning-based framework for single- or multi-step ahead predictions of time series data, 
+e.g. (continuous) blood glucose values of type 1 diabetics. <br/>
 Here is an overview of the proposed methodology:
 ![Alt text](./images/overview.png?raw=true "Methodology")
 
-### Configuration options of the framework (conig.gin) <br/>
+### Dependencies
+    - Python 3.7.0
+    - Tensorflow 2.8.0
+    - Tensorboard 2.8.0
+    - Tensorflow Agents 0.12.0
+    - Gym 0.23.0
+    - Pandas 1.1.5
+    - Numpy 1.21.5
+    - Matplotlib 3.5.1
+    - Absl-py 1.0.0
+    - Gin-config 0.5.0
+Install dependencies using the following command:
+```pip install -r requirements.txt```
+
+### Configuration options of the framework (see conig.gin) <br/>
+#### General settings
     - path_to_train_data [str]: specifiy path to csv training data set
     - path_to_eval_data [str]: specify path to csv testing data set 
         Note: if path is empty, training data is used for evaluation
+    - normalization [str]: specify normalization method  (options: min_max, z_score, none)
     - setup [str]: specify setup (currently single_step and multi_step)
-    - max_train_steps [int]: specify max number of training steps
-    - eval_interval [int]: specify how often to evaluate
-    - preheat_phase [bool]: (off-policy algorithms) specify to use preheat phase or not
-    - window_size [int]: specify length of window (single or multi step)
-    - min_attribute_val [float]: specify minimum value of attribute, e.g., CGM
-    - max_attribute_val [float]: specify maximum value of attribute, e.g., CGM
-    - forecasting_steps [int]: specify number of steps to forecast in multi step scenario
-    - reward_def [str]: specify which reward function to use
-        Options: abs_diff, linear, exponential
-    - rl_algorithm [str]: specify which RL algorithm to use
-        Options: ddpg, td3, reinforce, ppo, sac, dqn
+    - rl_algorithm [str]: specify RL algorithm to use   (options: ddpg, td3, reinforce, ppo, sac, dqn)
         Note: dqn only for single step; tf_agents only supoort scalar actions 
         Note: On-policy: reinforce, ppo ; Off-policy: ddpg, td3, sac, dqn
+    - env_implementation [str]: specify environment implementation to use   (options: tf, gym)
+    - use_gpu [bool]: Specify to use GPU(s) 
+    - multi_task [bool]: If True multi-task setup (training on multiple patients simultaneously)
+#### DRL training settings
+    - max_train_steps [int]: specify max number of training steps
+    - eval_interval [int]: specify how often to evaluate
+    - pretraining_phase [bool]: (off-policy algorithms) specify to use pretraining phase or not
+    - restore_dir [str]: path to directory with weights and biases to restore (no restoring if empty str) 
+    - layers_to_train [str]: if multi-task with resotring this str specifies which layers to train
+       (options: last, dec_last, lstm_dec_last)
+#### Single step settings
+    Gym environment settings 
+    ------------------------------
+    - window_size [int]: Input window size
+    - min_attribute_val [float]: Minimum value of attribute, e.g., CGM
+    - max_attribute_val [float]: Maximum value of attribute, e.g., CGM
+    - reward_def [str]: Specify reward function to use    (options: abs_diff, linear, exponential)
+    - max_window_count [int]: Specify the maximum number of windows to use per training iteration
+        Note: specify -1 if you want to use as much windows as possible with random starting point
+
+
+     TF environment settings
+    ------------------------------
+    - window_size [int]: Input window size
+    - min_attribute_val [float]: Minimum value of attribute, e.g., CGM
+    - max_attribute_val [float]: Maximum value of attribute, e.g., CGM
+    - max_window_count [int]: Specify the maximum number of windows to use per training iteration
+        Note: specify -1 if you want to use as much windows as possible with random starting point
+    - batch_size [int]: Specify batch size
+    - state_type [str]: Specify state type (options: skipping, no_skipping, single_step_shift)
+#### Multi step settings
+#### Gym environment settings
+    - window_size [int]: Input window size
+    - forecasting_steps [int]: Number of steps to forecast
+    - min_attribute_val [float]: Minimum value of attribute, e.g., CGM
+    - max_attribute_val [float]: Maximum value of attribute, e.g., CGM
+    - reward_def [str]: Specify reward function to use    (options: abs_diff, linear, exponential)
+    - max_window_count [int]: Specify the maximum number of windows to use per training iteration
+        Note: specify -1 if you want to use as much windows as possible with random starting point
+#### TF environment settings
+    - window_size [int]: Input window size
+    - pred_horizon [int]: Number of steps to forecast
+    - min_attribute_val [float]: specify minimum value of attribute, e.g., CGM
+    - max_attribute_val [float]: specify maximum value of attribute, e.g., CGM    
     - max_window_count [int]: specify the maximum number of windows to use per training iteration
         Note: specify -1 if you want to use as much windows as possible with random starting point
-    - env_implementation [str]: sepcify environment implementation to use
-        Options: tf, gym
-    - use_gpu [bool]: Specify to explictily use a GPU 
-    - multi_task [bool]: If True multi-task setup (training on multiple patients simultaneously)
-    - restore_dir [str]: path to directory that includes weight and bias files to restore networks 
-        (no restoring if empty str) 
-    - layers_to_train [atr]: if multi-task with resotring this str specifies which layers to train:
-        Options: last, dec_last, lstm_dec_last
+    - batch_size [int]: Specify batch size
+    - state_type [str]: Specify state type (options: skipping, no_skipping, single_step_shift)
+
+### Run in terminal
+Set configuration options in config.gin and run the following command in the terminal:
+```python main.py```
+### Run in Google colab
+- main.py: change path to config.gin (absolute path, e.g., '/content/rl_time_series_forecasting/config.gin')
+- config.gin: change path to datasets (absolute path, e.g., '/content/rl_time_series_forecasting/data/540-ws-training.csv')
+- Jupyter notebook code
+  - ``` !pip install -r /content/BG-Prediction-for-Type-1-Diabetics-using-DRL/requirements.txt```
+  - ``` !python /content/BG-Prediction-for-Type-1-Diabetics-using-DRL/main.py```
+
+### Visualization in Tensorboard
+Navigate to logging directory of interest and type  (in the terminal)
+```
+tensorboard --logdir .
+```
+Or specify the absolute path to the directory, e.g., 
+```
+tensorboard --logdir /home/my_project/logs/my_log_dir
+```
 
 ### Stand-alone scripts
 1) metric_eval_csv.py
@@ -63,59 +128,5 @@ Here is an overview of the proposed methodology:
    - Thus, a call of the script can look the following (including all arguments) <br/>
    ``` python uq_visualization.py --csv_path="." --setup="multi_step" --save_fig="True", --save_path="."```
 
-### Run in Google colab
-- main.py: change path to config.gin (absolute path -> '/content/rl_time_series_forecasting/config.gin')
-- config.gin: change path to datasets (absolute path e.g. '/content/rl_time_series_forecasting/data/540-ws-training.csv')
-- Jupyter notebook code
-  - ``` !pip install tf-agents```
-  - ``` !python /content/rl_time_series_forecasting/main.py```
-![Alt text](./images/colab.png?raw=true "Google Colab")
 
-### Visualization in Tensorboard
-Navigate to logging directory of interest and type  (in the terminal)
-```
-tensorboard --logdir .
-```
-Or specify the absolute path to the directory, e.g., 
-```
-tensorboard --logdir /home/my_project/logs/log2022-03-11_11-49-13
-```
-
-### Program structure
-![Alt text](./images/program_structure.png?raw=true "Program structure")
-- dataset.py 
-  - load data from csv file (time series data) <br/>
-- environment.py
-  - load data and set attributes, e.g., window size
-  - define state := fixed-size window
-  - reward := absolute difference of forecast and ground truth 
-    - normalization of reward in range [0, 1]
-    - idea
-      - small absolute difference <-> high reward: r=1
-      - large absolute difference <-> low reward: r=0
-        - Absolute difference normalized in [0, 1] 
-        - Linear definition  h
-        ![Alt text](./images/reward_fct_lin.png?raw=true "Reward function exp")
-        - Exponential definition
-        ![Alt text](./images/reward_fct_exp.png?raw=true "Reward function exp")
-    - Possible to try different values of `a` for slower/faster decrease or shift reward function in range [-1, 1] 
-  - reset -> random starting point in (sequential) stream of the data
-- agent.py
-  - DDPG, A3C with RNN (LSTM/GRU)
-- training.py
-  - Reinforcement Learning loop
-- evaluation.py
-  - evaluation of forecasts
-  - metrics: MAE, MSE, RMSE
-
-### Testing
-![Alt text](./images/unit_tests.png?raw=true "Unit tests")
-We test the different algorithms in a single and multi step scenario on a debug data set (RasberryPi.csv). This 
-data set can be found in the repository in ./data/RasberryPi.csv
-
-### TODO's
-- Use different replay buffers -> reverb replay buffer (deepmind)
-- Curriculum learning
-- Automatic Hyperparameter tuning
-- Tests for single step and multi step scenarios with debug data and different RL algorithms
 
