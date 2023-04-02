@@ -1,7 +1,7 @@
 import os
 import gin
 import logging
-import evaluation
+from evaluation import evaluation
 import numpy as np
 import visualization
 import tensorflow as tf
