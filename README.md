@@ -1,7 +1,7 @@
 # Blood Glucose Prediction for Type-1 Diabetics using Deep Reinforcement Learning
 
 [![Linux](https://svgshare.com/i/Zhy.svg)](https://ubuntu.com/download)
-[![Python](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-380/)
+[![Python](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
 
 
 Deep Reinforcement Learning-based framework for single- or multi-step ahead predictions of time series data, 
