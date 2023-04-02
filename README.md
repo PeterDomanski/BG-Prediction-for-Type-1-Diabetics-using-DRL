@@ -1,5 +1,9 @@
 # Blood Glucose Prediction for Type-1 Diabetics using Deep Reinforcement Learning
 
+[![Linux](https://svgshare.com/i/Zhy.svg)](https://ubuntu.com/download)
+[![Python](https://img.shields.io/badge/python-3.8-blue.svg)](https://www.python.org/downloads/release/python-380/)
+
+
 Deep Reinforcement Learning-based framework for single- or multi-step ahead predictions of time series data, 
 e.g. (continuous) blood glucose values of type 1 diabetics. <br/>
 Here is an overview of the proposed methodology:
@@ -7,7 +11,6 @@ Here is an overview of the proposed methodology:
 ![Alt text](./images/overview.png?raw=true "Methodology")
 
 ### Dependencies
-    - python 3.7.0
     - tensorflow 2.8.0
     - tensorboard 2.8.0
     - tf-gents 0.12.0
