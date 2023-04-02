@@ -1,12 +1,10 @@
 import os
 import gin
 import datetime
-import training
 import tensorflow as tf
 from data import dataset
 from absl import app, logging
-from rl import environment, rl_agent
-
+from rl import environment, rl_agent, training
 
 gpus = tf.config.list_physical_devices('GPU')
 if gpus:
