@@ -10,6 +10,9 @@ Here is an overview of the proposed methodology:
 
 ![Alt text](./images/overview.png?raw=true "Methodology")
 
+### Ohio T1DM dataset
+Learn more about the Ohio T1DM dataset for blood glucose prediction [here](http://smarthealth.cs.ohio.edu/OhioT1DM-dataset.html). <br/>
+
 ### Dependencies
     - tensorflow 2.8.0
     - tensorboard 2.8.0
@@ -102,7 +105,7 @@ Or specify the absolute path to the directory, e.g.,
 tensorboard --logdir /home/my_project/logs/my_log_dir
 ```
 
-### Stand-alone scripts
+### Stand-alone scripts (in evaluation directory)
 1) metric_eval_csv.py
    - Script to calculate the standard metrics (MAE, MSE, RMSE, ...) for arbitrary data sequences 
    - Stand-alone script that can be called directly from the terminal, e.g. ```python metric_eval_csv.py```
@@ -114,6 +117,8 @@ tensorboard --logdir /home/my_project/logs/my_log_dir
      - setup [str]: 'single_step' or 'multi_step' scenario
    - Thus, a call of the script can look the following (including all arguments) <br/>
    ``` python metric_eval_csv.py --csv_path="./data.csv" --metrics="mse,rmse" --indices="0,100" --strategy="consecutive" --setup="multi_step"```
+   
+   
 2) uq_visualization.py
    - Script to visualize UQ (variance) samples of training iterations
    - Stand-alone script that can be called directly from the terminal, e.g. ```python uq_visualization.py```
@@ -131,6 +136,8 @@ tensorboard --logdir /home/my_project/logs/my_log_dir
      - save_path [str]: path to store figure
    - Thus, a call of the script can look the following (including all arguments) <br/>
    ``` python uq_visualization.py --csv_path="./data.csv" --setup="multi_step" --save_fig="True", --save_path="."```
+   
+
 3) seg_visualization.py
    - Script to calculate and visualize the Surveillance Error Grid (SEG)
    - Stand-alone script that can be called directly from the terminal, e.g. ```python seg_visualization.py```
@@ -144,6 +151,7 @@ tensorboard --logdir /home/my_project/logs/my_log_dir
    ``` python uq_visualization.py --csv_path="./data.csv" --img_path="./seg.png" --ph=30, --patienth=570 --save_path="."```
    - Example:
    ![Alt text](./images/seg_30min_570.png?raw=true "SEG 30 min subject 570")
+
 
 
 
