@@ -1,6 +1,6 @@
 # Blood Glucose Prediction for Type-1 Diabetics using Deep Reinforcement Learning
 
-[![Linux](https://svgshare.com/i/Zhy.svg)](https://ubuntu.com/download)
+[![Linux](https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white)](https://ubuntu.com/download)
 [![Python](https://img.shields.io/badge/python-3.7-blue.svg)](https://www.python.org/downloads/release/python-370/)
 
 
