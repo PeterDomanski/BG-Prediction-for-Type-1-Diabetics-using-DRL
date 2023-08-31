@@ -5,7 +5,7 @@
 
 
 Deep Reinforcement Learning-based framework for single- or multi-step ahead predictions of time series data, 
-e.g. (continuous) blood glucose values of type 1 diabetics. <br/>
+e.g. (continuous) blood glucose values of type 1 diabetics (see ICDH 2023 paper at https://ieeexplore.ieee.org/abstract/document/10224700). <br/>
 Here is an overview of the proposed methodology:
 
 ![Alt text](./images/overview.png?raw=true "Methodology")
@@ -152,6 +152,15 @@ tensorboard --logdir /home/my_project/logs/my_log_dir
    - Example:
    ![Alt text](./images/seg_30min_570.png?raw=true "SEG 30 min subject 570")
 
-
-
-
+### Citation
+If you like our work, please cite the following paper
+```
+@inproceedings{domanski2023blood,
+  title={Blood Glucose Prediction for Type-1 Diabetics using Deep Reinforcement Learning},
+  author={Domanski, Peter and Ray, Aritra and Firouzi, Farshad and Lafata, Kyle and Chakrabarty, Krishnendu and Pfl{\"u}ger, Dirk},
+  booktitle={2023 IEEE International Conference on Digital Health (ICDH)},
+  pages={339--347},
+  year={2023},
+  organization={IEEE}
+}
+```
